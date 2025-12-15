@@ -5,6 +5,8 @@ import ReviewCard from '@/components/ReviewCard'
 import Navbar from '@/components/Navbar'
 import { revalidatePath } from 'next/cache'
 
+export const runtime = 'edge' // Required for Cloudflare Pages
+
 export default async function Home() {
   const supabase = await createClient()
 
