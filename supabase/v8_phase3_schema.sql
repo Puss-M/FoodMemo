@@ -51,5 +51,5 @@ insert into public.achievements (name, title, description, icon, requirement_typ
 ('liked_beginner', '初获认可', '获得 10 个赞', '❤️', 'likes_received', 10),
 ('liked_expert', '人气王者', '获得 100 个赞', '🔥', 'likes_received', 100),
 ('collector', '收藏家', '收藏 20 个地点', '🔖', 'bookmarks_made', 20),
-('social_butterfly', '社交达人', '关注 10 个用户', 'following_count', 10)
+('social_butterfly', '社交达人', '关注 10 个用户', '👥', 'following_count', 10)
 on conflict (name) do nothing;
