@@ -63,8 +63,7 @@ export default function LocationPicker({ onSelect, onClose }: LocationPickerProp
     }
   }, [])
 
-  const handleSearch = (val: string) => {
-    setKeyword(val)
+  const performSearch = (val: string) => {
     if (!val.trim() || !autoComplete) return
 
     setLoading(true)
@@ -94,12 +93,12 @@ export default function LocationPicker({ onSelect, onClose }: LocationPickerProp
                     <input 
                         type="text" 
                         value={keyword}
-                        onChange={(e) => handleSearch(e.target.value)}
+                        onChange={(e) => setKeyword(e.target.value)}
                         placeholder="搜索地点 (如: 光华村)"
                         autoFocus
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') {
-                                handleSearch(keyword)
+                                performSearch(keyword)
                             }
                         }}
                         className="w-full pl-9 pr-4 py-2 bg-zinc-50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 text-zinc-800 placeholder:text-zinc-400"
@@ -107,7 +106,7 @@ export default function LocationPicker({ onSelect, onClose }: LocationPickerProp
                 </div>
                 <div className="flex items-center gap-2">
                     <button 
-                        onClick={() => handleSearch(keyword)}
+                        onClick={() => performSearch(keyword)}
                         disabled={!keyword.trim() || loading}
                         className="px-4 py-2 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
                     >
