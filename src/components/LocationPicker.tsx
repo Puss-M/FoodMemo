@@ -45,7 +45,7 @@ export default function LocationPicker({ onSelect, onClose }: LocationPickerProp
             return
         }
         const script = document.createElement('script')
-        script.src = `https://webapi.amap.com/maps?v=2.0&key=${process.env.NEXT_PUBLIC_AMAP_KEY}&plugin=AMap.AutoComplete`
+        script.src = `https://webapi.amap.com/maps?v=2.0&key=${process.env.NEXT_PUBLIC_AMAP_KEY}&plugin=AMap.AutoComplete,AMap.PlaceSearch`
         script.async = true
         script.onload = () => resolve(window.AMap)
         script.onerror = reject
