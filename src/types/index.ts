@@ -10,7 +10,8 @@ export interface Review {
   content: string
   image_url: string | null
   tags: string[] | null
-  location: string | null
+  location_name: string | null
+  location_coords: any | null // JSON
   created_at: string
   profiles: Profile // Joined data
 }

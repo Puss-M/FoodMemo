@@ -5,6 +5,7 @@ import ReviewCard from '@/components/ReviewCard'
 import Navbar from '@/components/Navbar'
 import LeftSidebar from '@/components/LeftSidebar'
 import RightSidebar from '@/components/RightSidebar'
+import MobileNavbar from '@/components/MobileNavbar'
 import { revalidatePath } from 'next/cache'
 import { UtensilsCrossed } from 'lucide-react'
 
@@ -40,7 +41,7 @@ export default async function Home() {
     <main className="min-h-screen bg-zinc-50 lg:bg-stone-50">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto flex gap-6 px-4 lg:py-8 pt-20 pb-10">
+      <div className="max-w-7xl mx-auto flex gap-6 px-4 lg:py-8 pt-20 pb-28">
         {/* Left Sidebar (Desktop) */}
         <LeftSidebar />
 
@@ -75,6 +76,8 @@ export default async function Home() {
         {/* Right Sidebar (Desktop) */}
         <RightSidebar />
       </div>
+
+      <MobileNavbar onPublishClick={() => document.querySelector('textarea')?.focus()} />
     </main>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { Review } from '@/types'
-import { Clock, Trash2, Loader2, Heart } from 'lucide-react'
+import { Clock, Trash2, Loader2, Heart, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -69,6 +69,12 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
             <span className="text-xs text-zinc-400 flex items-center gap-1">
               · {timeAgo(review.created_at)}
             </span>
+            {review.location_name && (
+                <span className="flex items-center gap-0.5 text-xs text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-md">
+                    <MapPin className="w-3 h-3" />
+                    {review.location_name}
+                </span>
+            )}
           </div>
 
           {/* Content */}
