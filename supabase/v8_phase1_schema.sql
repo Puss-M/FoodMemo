@@ -10,10 +10,12 @@ add column if not exists bio text;
 -- 4. Add policy to allow authenticated users to upload:
 
 -- Create storage policies for avatars bucket (Run after creating bucket)
+drop policy if exists "Avatar images are publicly accessible" on storage.objects;
 create policy "Avatar images are publicly accessible"
   on storage.objects for select
   using (bucket_id = 'avatars');
 
+drop policy if exists "Users can upload their own avatar" on storage.objects;
 create policy "Users can upload their own avatar"
   on storage.objects for insert
   with check (
@@ -21,6 +23,7 @@ create policy "Users can upload their own avatar"
     and auth.uid()::text = (storage.foldername(name))[1]
   );
 
+drop policy if exists "Users can update their own avatar" on storage.objects;
 create policy "Users can update their own avatar"
   on storage.objects for update
   using (
@@ -28,6 +31,7 @@ create policy "Users can update their own avatar"
     and auth.uid()::text = (storage.foldername(name))[1]
   );
 
+drop policy if exists "Users can delete their own avatar" on storage.objects;
 create policy "Users can delete their own avatar"
   on storage.objects for delete
   using (

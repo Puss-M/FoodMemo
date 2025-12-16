@@ -11,11 +11,26 @@ export default function ProfileView({ profile, stats, userId }: any) {
     const [activeTab, setActiveTab] = useState<'posts' | 'likes' | 'saved'>('posts')
     const [reviews, setReviews] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
+    const [achievements, setAchievements] = useState<any[]>([])
 
     // Format date
     const joinedDate = profile?.created_at 
         ? new Date(profile.created_at).toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' })
         : '未知时间'
+
+    // Fetch user achievements
+    useEffect(() => {
+        async function fetchAchievements() {
+            const { data } = await supabase
+                .from('user_achievements')
+                .select('*, achievements(*)')
+                .eq('user_id', userId)
+                .order('unlocked_at', { ascending: false })
+            
+            if (data) setAchievements(data)
+        }
+        fetchAchievements()
+    }, [userId, supabase])
 
     useEffect(() => {
         async function fetchReviews() {
@@ -101,8 +116,42 @@ export default function ProfileView({ profile, stats, userId }: any) {
                         <div className="text-xl font-bold text-zinc-900">{stats?.total_bookmarks_made || 0}</div>
                         <div className="text-xs text-zinc-400 uppercase tracking-wider font-medium mt-1">收藏</div>
                     </div>
+                    <div className="text-center">
+                        <div className="text-xl font-bold text-zinc-900">{stats?.followers_count || 0}</div>
+                        <div className="text-xs text-zinc-400 uppercase tracking-wider font-medium mt-1">粉丝</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="text-xl font-bold text-zinc-900">{stats?.following_count || 0}</div>
+                        <div className="text-xs text-zinc-400 uppercase tracking-wider font-medium mt-1">关注</div>
+                    </div>
                 </div>
             </div>
+
+            {/* Achievements Badge Wall */}
+            {achievements.length > 0 && (
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-zinc-100 mb-6">
+                    <h3 className="text-lg font-bold text-zinc-900 mb-4 flex items-center gap-2">
+                        <span>🏆</span>
+                        <span>成就徽章</span>
+                        <span className="text-sm font-normal text-zinc-400">({achievements.length})</span>
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {achievements.map((ua: any) => (
+                            <div
+                                key={ua.id}
+                                className="flex flex-col items-center p-4 rounded-xl bg-gradient-to-br from-orange-50 to-yellow-50 border border-orange-100 hover:shadow-md transition-shadow"
+                                title={ua.achievements.description}
+                            >
+                                <div className="text-4xl mb-2">{ua.achievements.icon}</div>
+                                <div className="text-sm font-bold text-zinc-900 text-center">{ua.achievements.title}</div>
+                                <div className="text-xs text-zinc-500 mt-1">
+                                    {new Date(ua.unlocked_at).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Sticky Tabs */}
             <div className="sticky top-[72px] z-10 bg-zinc-50/95 backdrop-blur-md pb-4 pt-2 -mx-2 px-2">

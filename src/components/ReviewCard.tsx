@@ -37,6 +37,7 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
   const [isLiked, setIsLiked] = useState(false) 
   const [likeCount, setLikeCount] = useState(0)
   const [isBookmarked, setIsBookmarked] = useState(false)
+  const [isFollowing, setIsFollowing] = useState(false)
 
   // Fetch initial states
   useEffect(() => {
@@ -60,6 +61,18 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
             const count = res.count
             if (count && count > 0) setIsBookmarked(true)
         })
+
+        // Follow State (only if not own review)
+        if (review.user_id !== currentUserId) {
+            supabase.from('follows')
+            .select('*', { count: 'exact', head: true })
+            .eq('follower_id', currentUserId)
+            .eq('following_id', review.user_id)
+            .then((res: any) => {
+                const count = res.count
+                if (count && count > 0) setIsFollowing(true)
+            })
+        }
     }
     
     // Total Likes
@@ -111,17 +124,40 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
 
     try {
         if (previousState) {
-             // Remove bookmark
              await supabase.from('fm_bookmarks').delete().match({ user_id: currentUserId, review_id: review.id })
              toast.success('已取消收藏')
         } else {
-             // Add bookmark
              await supabase.from('fm_bookmarks').insert({ user_id: currentUserId, review_id: review.id })
              toast.success('已收藏')
         }
     } catch (err) {
         console.error('Bookmark toggle failed', err)
         setIsBookmarked(previousState)
+        toast.error('操作失败')
+    }
+  }
+
+  const handleToggleFollow = async () => {
+    if (!currentUserId) {
+        toast.error('请先登录')
+        router.push('/login')
+        return
+    }
+
+    const previousState = isFollowing
+    setIsFollowing(!previousState)
+
+    try {
+        if (previousState) {
+             await supabase.from('follows').delete().match({ follower_id: currentUserId, following_id: review.user_id })
+             toast.success('已取消关注')
+        } else {
+             await supabase.from('follows').insert({ follower_id: currentUserId, following_id: review.user_id })
+             toast.success('已关注')
+        }
+    } catch (err) {
+        console.error('Follow toggle failed', err)
+        setIsFollowing(previousState)
         toast.error('操作失败')
     }
   }
@@ -164,16 +200,31 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
 
         <div className="flex-1 min-w-0">
           {/* Header */}
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-bold text-zinc-900">{review.profiles?.username || 'Unknown'}</span>
-            <span className="text-xs text-zinc-400 flex items-center gap-1">
-              · {timeAgo(review.created_at)}
-            </span>
-            {review.location_name && (
-                <span className="flex items-center gap-0.5 text-xs text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-md">
-                    <MapPin className="w-3 h-3" />
-                    {review.location_name}
-                </span>
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-zinc-900">{review.profiles?.username || 'Unknown'}</span>
+              <span className="text-xs text-zinc-400 flex items-center gap-1">
+                · {timeAgo(review.created_at)}
+              </span>
+              {review.location_name && (
+                  <span className="flex items-center gap-0.5 text-xs text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded-md">
+                      <MapPin className="w-3 h-3" />
+                      {review.location_name}
+                  </span>
+              )}
+            </div>
+            {/* Follow Button (only show if not own review) */}
+            {currentUserId && review.user_id !== currentUserId && (
+              <button
+                onClick={handleToggleFollow}
+                className={`text-xs px-3 py-1 rounded-full font-medium transition-colors ${
+                  isFollowing 
+                    ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200' 
+                    : 'bg-orange-500 text-white hover:bg-orange-600'
+                }`}
+              >
+                {isFollowing ? '已关注' : '+ 关注'}
+              </button>
             )}
           </div>
 
