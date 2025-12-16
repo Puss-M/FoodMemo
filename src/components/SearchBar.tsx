@@ -41,8 +41,15 @@ export default function SearchBar() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="搜索评价内容..."
-          className="w-full pl-12 pr-4 py-3 bg-white border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-zinc-800 placeholder:text-zinc-400"
+          className="w-full pl-12 pr-20 py-3 bg-white border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 text-zinc-800 placeholder:text-zinc-400"
         />
+        <button
+          type="submit"
+          disabled={!searchTerm.trim()}
+          className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1.5 bg-orange-500 text-white text-sm font-medium rounded-lg hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          搜索
+        </button>
       </form>
 
       {/* Cuisine Filters */}
