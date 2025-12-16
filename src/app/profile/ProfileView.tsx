@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, LayoutGrid, Heart, Bookmark } from 'lucide-react'
+import { Calendar, LayoutGrid, Heart, Bookmark, Settings } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import ReviewCard from '@/components/ReviewCard'
+import Link from 'next/link'
 
 export default function ProfileView({ profile, stats, userId }: any) {
     const supabase = createClient()
@@ -24,14 +25,9 @@ export default function ProfileView({ profile, stats, userId }: any) {
             if (activeTab === 'posts') {
                 query = query.eq('user_id', userId)
             } else if (activeTab === 'likes') {
-                // Join likes: get reviews I liked. 
-                // Supabase JS doesn't support easy "join table" filtering in one go for "reviews where id in (select review_id from likes)". 
-                // We'll filter via manual subquery logic or use `fm_likes!inner(user_id)` if we set up foreign keys correctly. 
-                // Simplified approach: Fetch likes first (IDs) then fetch reviews. Or use a view/RPC.
-                // Revert to fetching IDs first for v7.0 without complex schema changes.
                 const { data: likes } = await supabase.from('fm_likes').select('review_id').eq('user_id', userId)
                 if (likes && likes.length > 0) {
-                     const ids = likes.map(l => l.review_id)
+                     const ids = likes.map((l: any) => l.review_id)
                      query = query.in('id', ids)
                 } else {
                     setReviews([])
@@ -41,7 +37,7 @@ export default function ProfileView({ profile, stats, userId }: any) {
             } else if (activeTab === 'saved') {
                 const { data: bookmarks } = await supabase.from('fm_bookmarks').select('review_id').eq('user_id', userId)
                 if (bookmarks && bookmarks.length > 0) {
-                     const ids = bookmarks.map(b => b.review_id)
+                     const ids = bookmarks.map((b: any) => b.review_id)
                      query = query.in('id', ids)
                 } else {
                     setReviews([])
@@ -61,7 +57,16 @@ export default function ProfileView({ profile, stats, userId }: any) {
     return (
         <div>
             {/* User Profile Card */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-zinc-100 mb-6 flex flex-col items-center text-center">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-zinc-100 mb-6 flex flex-col items-center text-center relative">
+                {/* Settings Button */}
+                <Link 
+                    href="/settings"
+                    className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 rounded-lg transition-colors"
+                    title="设置"
+                >
+                    <Settings className="w-5 h-5" />
+                </Link>
+
                 <div className="w-24 h-24 rounded-full bg-orange-100 mb-4 overflow-hidden border-4 border-white shadow-lg">
                     {profile?.avatar_url ? (
                         <img src={profile.avatar_url} alt={profile.username} className="w-full h-full object-cover" />
@@ -72,6 +77,12 @@ export default function ProfileView({ profile, stats, userId }: any) {
                     )}
                 </div>
                 <h1 className="text-2xl font-bold text-zinc-900 mb-1">{profile?.username || '未命名用户'}</h1>
+                
+                {/* Bio */}
+                {profile?.bio && (
+                    <p className="text-sm text-zinc-500 mb-4 max-w-md">{profile.bio}</p>
+                )}
+                
                 <div className="flex items-center gap-1.5 text-zinc-500 text-sm mb-6">
                     <Calendar className="w-4 h-4" />
                     <span>加入于 {joinedDate}</span>
