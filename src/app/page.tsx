@@ -6,13 +6,14 @@ import Navbar from '@/components/Navbar'
 import LeftSidebar from '@/components/LeftSidebar'
 import RightSidebar from '@/components/RightSidebar'
 import MobileNavbar from '@/components/MobileNavbar'
+import SearchBar from '@/components/SearchBar'
 import { revalidatePath } from 'next/cache'
 import { UtensilsCrossed } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
 type Props = {
-  searchParams: Promise<{ tag?: string }>
+  searchParams: Promise<{ tag?: string; cuisine?: string; q?: string }>
 }
 
 export default async function Home(props: Props) {
@@ -32,16 +33,22 @@ export default async function Home(props: Props) {
     .select('*, profiles(username, avatar_url)')
     .order('created_at', { ascending: false })
 
+  // Filter by tag
   if (searchParams.tag) {
-    // Determine if we need to add # or not. DB stores "#tag".
-    // If param is just "tag", we might need "#tag".
-    // Let's assume URL sends the hash decoded or encoded.
-    // If user clicks tag in UI, we'll send encoded tag.
-    // decodeURIComponent(searchParams.tag) might be needed if Next doesn't auto-decode.
-    // Actually searchParams are decoded by default usually, but let's be safe.
     const tag = decodeURIComponent(searchParams.tag)
-    // Supabase filtering for array column
     query = query.contains('tags', [tag])
+  }
+
+  // Filter by cuisine
+  if (searchParams.cuisine) {
+    const cuisine = `#${decodeURIComponent(searchParams.cuisine)}`
+    query = query.contains('tags', [cuisine])
+  }
+
+  // Search by content
+  if (searchParams.q) {
+    const searchTerm = decodeURIComponent(searchParams.q)
+    query = query.ilike('content', `%${searchTerm}%`)
   }
 
   const { data: reviews, error } = await query
@@ -69,12 +76,15 @@ export default async function Home(props: Props) {
           {/* Feed Header */}
           <div className="mb-6 flex items-center gap-2">
             <h2 className="text-xl font-bold text-zinc-900">
-               {searchParams.tag ? `🏷️ ${decodeURIComponent(searchParams.tag)}` : '🔥 实时广场'}
+               {searchParams.q ? `🔍 "${decodeURIComponent(searchParams.q)}"` : searchParams.cuisine ? `🍜 ${decodeURIComponent(searchParams.cuisine)}` : searchParams.tag ? `🏷️ ${decodeURIComponent(searchParams.tag)}` : '🔥 实时广场'}
             </h2>
-            {searchParams.tag && (
+            {(searchParams.tag || searchParams.cuisine || searchParams.q) && (
                 <a href="/" className="text-sm text-zinc-400 hover:text-orange-500 ml-2">清除筛选</a>
             )}
           </div>
+
+          {/* Search Bar */}
+          <SearchBar />
 
           {/* Publisher */}
           <Publisher session={session} onPostSuccess={refreshFeed} />

@@ -8,10 +8,12 @@ export default function RightSidebar() {
   const supabase = createClient()
   const [trendingTags, setTrendingTags] = useState<{label: string, count: number, color: string}[]>([])
   const [topFoodies, setTopFoodies] = useState<{name: string, seed: string, desc: string, postCount: number}[]>([])
+  const [announcement, setAnnouncement] = useState<string>('加载中...')
 
   useEffect(() => {
     fetchTrendingTags()
     fetchTopFoodies()
+    generateAnnouncement()
   }, [])
 
   const fetchTrendingTags = async () => {
@@ -76,6 +78,48 @@ export default function RightSidebar() {
     setTopFoodies(sorted)
   }
 
+  const generateAnnouncement = async () => {
+    // Get most recent review with location or tags
+    const { data: recentReview } = await supabase
+      .from('reviews')
+      .select('location_name, tags, created_at')
+      .not('location_name', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (recentReview?.location_name) {
+      const locationName = recentReview.location_name
+      const tag = recentReview.tags?.[0] || ''
+      const hasRecommendTag = tag.includes('推荐')
+      
+      if (hasRecommendTag) {
+        setAnnouncement(`最近有同学推荐了"${locationName}"，快去看看吧！`)
+      } else {
+        setAnnouncement(`刚刚有人打卡了"${locationName}"，来分享你的美食体验吧~`)
+      }
+    } else {
+      // Fallback based on trending tags
+      const { data: reviews } = await supabase
+        .from('reviews')
+        .select('tags')
+        .order('created_at', { ascending: false })
+        .limit(10)
+
+      if (reviews && reviews.length > 0) {
+        const allTags = reviews.flatMap((r: any) => r.tags || [])
+        const hasRecommend = allTags.some((t: string) => t.includes('推荐'))
+        if (hasRecommend) {
+          setAnnouncement('今日广场有新推荐！快来看看大家都在吃什么~')
+        } else {
+          setAnnouncement('欢迎分享你的美食体验，帮助更多同学避雷！')
+        }
+      } else {
+        setAnnouncement('快来发布第一条美食评价吧！')
+      }
+    }
+  }
+
   return (
     <aside className="hidden lg:flex w-80 sticky top-4 h-fit flex-col gap-4">
       {/* Discovery Zone */}
@@ -127,11 +171,11 @@ export default function RightSidebar() {
         </div>
       </div>
 
-       {/* Announcement (Optional) */}
+       {/* AI Announcement */}
        <div className="bg-linear-to-br from-orange-50 to-amber-50 rounded-2xl p-4 border border-orange-100">
           <h4 className="font-bold text-orange-800 mb-1 text-sm">📢 圈子公告</h4>
           <p className="text-xs text-orange-700/80 leading-relaxed">
-            本周五二食堂二楼有新窗口试吃活动，凭学生证免费领取！
+            {announcement}
           </p>
        </div>
     </aside>
