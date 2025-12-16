@@ -4,6 +4,7 @@ import { Review } from '@/types'
 import { Clock, Trash2, Loader2, Heart, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
@@ -98,12 +99,13 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
           {review.tags && review.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
               {review.tags.map((tag, idx) => (
-                <span 
+                <Link 
+                  href={`/?tag=${encodeURIComponent(tag)}`}
                   key={idx} 
-                  className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium"
+                  className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors"
                 >
                   {tag}
-                </span>
+                </Link>
               ))}
             </div>
           )}

@@ -11,7 +11,12 @@ import { UtensilsCrossed } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
-export default async function Home() {
+type Props = {
+  searchParams: Promise<{ tag?: string }>
+}
+
+export default async function Home(props: Props) {
+  const searchParams = await props.searchParams
   const supabase = await createClient()
 
   // 1. Auth Check
@@ -22,10 +27,24 @@ export default async function Home() {
   }
 
   // 2. Fetch Reviews
-  const { data: reviews, error } = await supabase
+  let query = supabase
     .from('reviews')
     .select('*, profiles(username, avatar_url)')
     .order('created_at', { ascending: false })
+
+  if (searchParams.tag) {
+    // Determine if we need to add # or not. DB stores "#tag".
+    // If param is just "tag", we might need "#tag".
+    // Let's assume URL sends the hash decoded or encoded.
+    // If user clicks tag in UI, we'll send encoded tag.
+    // decodeURIComponent(searchParams.tag) might be needed if Next doesn't auto-decode.
+    // Actually searchParams are decoded by default usually, but let's be safe.
+    const tag = decodeURIComponent(searchParams.tag)
+    // Supabase filtering for array column
+    query = query.contains('tags', [tag])
+  }
+
+  const { data: reviews, error } = await query
 
   if (error) {
     console.error('Error fetching reviews:', error)
@@ -49,7 +68,12 @@ export default async function Home() {
         <div className="flex-1 min-w-0 max-w-2xl mx-auto w-full">
           {/* Feed Header */}
           <div className="mb-6 flex items-center gap-2">
-            <h2 className="text-xl font-bold text-zinc-900">🔥 实时广场</h2>
+            <h2 className="text-xl font-bold text-zinc-900">
+               {searchParams.tag ? `🏷️ ${decodeURIComponent(searchParams.tag)}` : '🔥 实时广场'}
+            </h2>
+            {searchParams.tag && (
+                <a href="/" className="text-sm text-zinc-400 hover:text-orange-500 ml-2">清除筛选</a>
+            )}
           </div>
 
           {/* Publisher */}
