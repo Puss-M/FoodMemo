@@ -77,7 +77,7 @@ export default async function Home() {
         <RightSidebar />
       </div>
 
-      <MobileNavbar onPublishClick={() => document.querySelector('textarea')?.focus()} />
+      <MobileNavbar />
     </main>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Image as ImageIcon, Send, X, Loader2, MapPin } from 'lucide-react'
 import { Session } from '@supabase/supabase-js'
@@ -40,6 +40,20 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
     const newTags = tags ? `${tags} ${tag}` : tag
     setTags(newTags.trim())
   }
+
+  // Listen for mobile navbar trigger
+  useEffect(() => {
+    const handleFocus = () => {
+      setIsExpanded(true)
+      // Small delay to allow expansion
+      setTimeout(() => {
+        document.querySelector('textarea')?.focus()
+      }, 100)
+    }
+    
+    window.addEventListener('focus-publisher', handleFocus)
+    return () => window.removeEventListener('focus-publisher', handleFocus)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
