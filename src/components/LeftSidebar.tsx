@@ -9,17 +9,27 @@ export default function LeftSidebar() {
   const supabase = createClient()
   const router = useRouter()
   const [profile, setProfile] = useState<any>(null)
+  const [postCount, setPostCount] = useState(0)
 
   useEffect(() => {
     const getProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        // Fetch Profile
         const { data } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .single()
         setProfile(data)
+
+        // Fetch Post Count
+        const { count } = await supabase
+          .from('reviews')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+        
+        setPostCount(count || 0)
       }
     }
     getProfile()
@@ -80,7 +90,7 @@ export default function LeftSidebar() {
         
         <div className="flex justify-between border-t border-zinc-50 pt-3 mb-3">
             <div className="text-center flex-1 border-r border-zinc-50 last:border-0">
-                <div className="text-xl font-bold text-zinc-900">12</div>
+                <div className="text-xl font-bold text-zinc-900">{postCount}</div>
                 <div className="text-xs text-zinc-400">发布</div>
             </div>
             <div className="text-center flex-1">
