@@ -23,12 +23,7 @@ interface LocationPickerProps {
   onClose: () => void
 }
 
-// 1. Configure Security Code (MUST be before script load)
-if (typeof window !== 'undefined' && !window._AMapSecurityConfig) {
-  window._AMapSecurityConfig = {
-    securityJsCode: 'ec999086e340d6ca9b78a94747cc9d26', // Hardcoded for debugging to ensure it works, user can revert to env if needed later but env vars are tricky in client components sometimes without next.config setup
-  }
-}
+
 
 export default function LocationPicker({ onSelect, onClose }: LocationPickerProps) {
   const [keyword, setKeyword] = useState('')

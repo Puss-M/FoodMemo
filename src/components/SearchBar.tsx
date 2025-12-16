@@ -2,7 +2,7 @@
 
 import { Search } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const CUISINES = ['川菜', '火锅', '烧烤', '小吃', '饮品', '食堂', '西餐']
 
@@ -13,8 +13,26 @@ export default function SearchBar() {
 
   const activeCuisine = searchParams.get('cuisine')
 
+  // Debounce logic
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        // Only trigger search if value changed and it's not the initial load
+        if (searchTerm !== searchParams.get('q')) {
+            if (searchTerm.trim()) {
+                router.push(`/?q=${encodeURIComponent(searchTerm)}`)
+            } else if (searchTerm === '' && searchParams.get('q')) {
+                // Clear search if empty
+                router.push('/')
+            }
+        }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [searchTerm, router, searchParams])
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
+    // Immediate search on Enter/Click
     if (searchTerm.trim()) {
       router.push(`/?q=${encodeURIComponent(searchTerm)}`)
     } else {

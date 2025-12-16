@@ -5,7 +5,7 @@ import { Clock, Trash2, Loader2, Heart, MapPin } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import CommentSection from './CommentSection'
 
@@ -32,7 +32,68 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
   const supabase = createClient()
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
-  const [isLiked, setIsLiked] = useState(false)
+  
+  // Optimistic UI State
+  // Initial state logic:
+  // 1. Check if current user is in the map/list of likers (if backend returns it)
+  // For now we default to false or passed prop if available. 
+  // Ideally, 'review' object should have 'is_liked_by_user' boolean from a join.
+  // We'll trust the user to have updated the backend view or simply default to false until fetch.
+  // BUT: To make it work immediately without backend join changes, we might need a separate fetch. 
+  // However, simpler is to just handle the toggle logic first.
+  const [isLiked, setIsLiked] = useState(false) 
+  const [likeCount, setLikeCount] = useState(0) // Default to 0 if no count provided
+
+  // Fetch initial like state (Client-side fetch for v6.0 quick fix)
+  useEffect(() => {
+    if (currentUserId) {
+        supabase.from('fm_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('review_id', review.id)
+        .eq('user_id', currentUserId)
+        .then(({ count }) => {
+            if (count && count > 0) setIsLiked(true)
+        })
+    }
+    // Get total likes
+    supabase.from('fm_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('review_id', review.id)
+        .then(({ count }) => {
+            if (count !== null) setLikeCount(count)
+        })
+  }, [currentUserId, review.id, supabase])
+
+  const handleToggleLike = async () => {
+    if (!currentUserId) {
+        toast.error('请先登录')
+        router.push('/login')
+        return
+    }
+
+    // Optimistic Update
+    const previousState = isLiked
+    const previousCount = likeCount
+    
+    setIsLiked(!previousState)
+    setLikeCount(previousState ? previousCount - 1 : previousCount + 1)
+
+    try {
+        if (previousState) {
+            // Unlike
+            await supabase.from('fm_likes').delete().match({ user_id: currentUserId, review_id: review.id })
+        } else {
+            // Like
+            await supabase.from('fm_likes').insert({ user_id: currentUserId, review_id: review.id })
+        }
+    } catch (err) {
+        // Revert on error
+        console.error('Like toggle failed', err)
+        setIsLiked(previousState)
+        setLikeCount(previousCount)
+        toast.error('操作失败')
+    }
+  }
 
   const handleDelete = async () => {
     if (!confirm('确定要删除这条评价吗？')) return
@@ -56,16 +117,19 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
       }, 500)
     }
   }
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-zinc-100 p-5 mb-4 hover:shadow-md transition-shadow">
       <div className="flex gap-4">
         {/* Avatar */}
         <div className="shrink-0">
-          <img 
-            src={review.profiles?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${review.profiles?.username || 'User'}`} 
-            alt="Avatar" 
-            className="w-10 h-10 rounded-full bg-zinc-100 object-cover"
-          />
+            <Link href={`/profile`}>
+              <img 
+                src={review.profiles?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${review.profiles?.username || 'User'}`} 
+                alt="Avatar" 
+                className="w-10 h-10 rounded-full bg-zinc-100 object-cover hover:opacity-80 transition-opacity"
+              />
+            </Link>
         </div>
 
         <div className="flex-1 min-w-0">
@@ -122,12 +186,12 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
 
           <div className="flex items-center justify-between mt-3 pt-2 border-t border-zinc-50">
             <button 
-              onClick={() => setIsLiked(!isLiked)}
+              onClick={handleToggleLike}
               className="group flex items-center gap-1.5 text-zinc-400 hover:text-red-500 transition-colors"
             >
               <Heart className={`w-4 h-4 transition-all ${isLiked ? 'fill-red-500 text-red-500 scale-110' : 'group-hover:scale-110'}`} />
               <span className={`text-xs font-medium ${isLiked ? 'text-red-500' : ''}`}>
-                {isLiked ? 59 : 58}
+                {likeCount > 0 ? likeCount : '赞'}
               </span>
             </button>
 
