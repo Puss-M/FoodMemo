@@ -51,7 +51,8 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
         .select('*', { count: 'exact', head: true })
         .eq('review_id', review.id)
         .eq('user_id', currentUserId)
-        .then(({ count }) => {
+        .then((res) => {
+            const count = res.count
             if (count && count > 0) setIsLiked(true)
         })
     }
@@ -59,7 +60,8 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
     supabase.from('fm_likes')
         .select('*', { count: 'exact', head: true })
         .eq('review_id', review.id)
-        .then(({ count }) => {
+        .then((res) => {
+            const count = res.count
             if (count !== null) setLikeCount(count)
         })
   }, [currentUserId, review.id, supabase])
