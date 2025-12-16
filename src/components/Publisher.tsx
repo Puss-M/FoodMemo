@@ -252,7 +252,7 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
 
       {showLocationPicker && (
         <LocationPicker 
-            onSelect={(loc) => {
+            onLocationSelect={(loc) => {
                 setSelectedLocation(loc)
                 setShowLocationPicker(false)
             }} 
