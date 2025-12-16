@@ -29,7 +29,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-stone-50`}
       >
-        <MapInitializer />
+        <AMapRegistry />
         {children}
         <Toaster position="top-center" richColors />
       </body>
