@@ -23,6 +23,13 @@ interface LocationPickerProps {
   onClose: () => void
 }
 
+// 1. Configure Security Code (MUST be before script load)
+if (typeof window !== 'undefined') {
+  (window as any)._AMapSecurityConfig = {
+    securityJsCode: process.env.NEXT_PUBLIC_AMAP_SECURITY_CODE,
+  }
+}
+
 export default function LocationPicker({ onSelect, onClose }: LocationPickerProps) {
   const [keyword, setKeyword] = useState('')
   const [results, setResults] = useState<Location[]>([])
@@ -31,11 +38,6 @@ export default function LocationPicker({ onSelect, onClose }: LocationPickerProp
   const [autoComplete, setAutoComplete] = useState<any>(null)
 
   useEffect(() => {
-    // 1. Configure Security Code
-    window._AMapSecurityConfig = {
-      securityJsCode: process.env.NEXT_PUBLIC_AMAP_SECURITY_CODE,
-    }
-
     // 2. Load AMap Script
     const loader = new Promise((resolve, reject) => {
         if (window.AMap) {
