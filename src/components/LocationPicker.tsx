@@ -133,6 +133,6 @@ declare global {
   interface Window {
     BMap: any
     BMAP_STATUS_SUCCESS: any
-    initBaiduMap: () => void
+    initBaiduMap?: () => void
   }
 }
