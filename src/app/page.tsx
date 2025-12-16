@@ -96,7 +96,6 @@ export default async function Home(props: Props) {
                   key={review.id} 
                   review={review} 
                   currentUserId={session?.user.id}
-                  onDelete={refreshFeed}
                 />
               ))}
               

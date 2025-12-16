@@ -28,8 +28,9 @@ function timeAgo(dateString: string) {
   return "刚刚"
 }
 
-export default function ReviewCard({ review, currentUserId, onDelete }: { review: Review, currentUserId?: string, onDelete?: () => void }) {
+export default function ReviewCard({ review, currentUserId }: { review: Review, currentUserId?: string }) {
   const supabase = createClient()
+  const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
 
@@ -48,9 +49,11 @@ export default function ReviewCard({ review, currentUserId, onDelete }: { review
       setIsDeleting(false)
     } else {
       toast.success('已删除')
-      if (onDelete) {
-        onDelete()
-      }
+      // Force page refresh to update the list
+      setTimeout(() => {
+        router.refresh()
+        window.location.reload()
+      }, 500)
     }
   }
   return (
