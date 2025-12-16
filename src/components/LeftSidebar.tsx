@@ -2,7 +2,8 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import { Utensils, Home, User, Heart, LogOut } from 'lucide-react'
+import { Utensils, Home, LogOut } from 'lucide-react'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 export default function LeftSidebar() {
@@ -50,12 +51,6 @@ export default function LeftSidebar() {
     router.push('/login')
   }
 
-  const navItems = [
-    { icon: Home, label: '广场首页', active: true },
-    { icon: User, label: '我的评价', active: false },
-    { icon: Heart, label: '我的收藏', active: false },
-  ]
-
   return (
     <aside className="hidden lg:flex w-64 sticky top-4 h-[calc(100vh-2rem)] flex-col gap-6">
       {/* Logo Area */}
@@ -66,19 +61,25 @@ export default function LeftSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1">
-        {navItems.map((item) => (
-          <button
-            key={item.label}
-            className={`w-full flex items-center gap-4 px-4 py-3 rounded-full text-lg font-medium transition-colors ${
-              item.active 
-                ? 'bg-orange-50 text-orange-600 font-bold' 
-                : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
-            }`}
-          >
-            <item.icon className={`w-7 h-7 ${item.active ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-            {item.label}
-          </button>
-        ))}
+        <Link
+          href="/"
+          className="w-full flex items-center gap-4 px-4 py-3 rounded-full text-lg font-bold transition-colors bg-orange-50 text-orange-600"
+        >
+          <Home className="w-7 h-7 stroke-[2.5px]" />
+          广场首页
+        </Link>
+        
+        {/* Commented out unimplemented features */}
+        {/* 
+        <button className="w-full flex items-center gap-4 px-4 py-3 rounded-full text-lg font-medium transition-colors text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900">
+          <User className="w-7 h-7 stroke-2" />
+          我的评价
+        </button>
+        <button className="w-full flex items-center gap-4 px-4 py-3 rounded-full text-lg font-medium transition-colors text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900">
+          <Heart className="w-7 h-7 stroke-2" />
+          我的收藏
+        </button>
+        */}
       </nav>
 
       {/* User Stats Card */}

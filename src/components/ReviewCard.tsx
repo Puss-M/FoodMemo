@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import CommentSection from './CommentSection'
 
 // Helper to format time (e.g. "2 hours ago")
 function timeAgo(dateString: string) {
@@ -27,9 +28,8 @@ function timeAgo(dateString: string) {
   return "刚刚"
 }
 
-export default function ReviewCard({ review, currentUserId }: { review: Review, currentUserId?: string }) {
+export default function ReviewCard({ review, currentUserId, onDelete }: { review: Review, currentUserId?: string, onDelete?: () => void }) {
   const supabase = createClient()
-  const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
 
@@ -48,7 +48,9 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
       setIsDeleting(false)
     } else {
       toast.success('已删除')
-      router.refresh()
+      if (onDelete) {
+        onDelete()
+      }
     }
   }
   return (
@@ -108,6 +110,11 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
                 </Link>
               ))}
             </div>
+          )}
+
+          {/* Comments Section */}
+          {currentUserId && (
+            <CommentSection reviewId={review.id} currentUserId={currentUserId} />
           )}
 
           <div className="flex items-center justify-between mt-3 pt-2 border-t border-zinc-50">

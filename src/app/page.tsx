@@ -82,7 +82,12 @@ export default async function Home(props: Props) {
           {/* Timeline */}
           <div className="space-y-4">
               {reviews?.map((review: any) => (
-                <ReviewCard key={review.id} review={review} currentUserId={session?.user.id} />
+                <ReviewCard 
+                  key={review.id} 
+                  review={review} 
+                  currentUserId={session?.user.id}
+                  onDelete={refreshFeed}
+                />
               ))}
               
               {(!reviews || reviews.length === 0) && (
