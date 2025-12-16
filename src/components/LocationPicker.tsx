@@ -17,7 +17,7 @@ export default function LocationPicker({ onLocationSelect, onClose }: LocationPi
   useEffect(() => {
     // 动态加载百度地图 SDK
     const script = document.createElement('script')
-    script.src = `https://api.map.baidu.com/api?v=3.0&ak=你的百度地图AK&callback=initBaiduMap`
+    script.src = `https://api.map.baidu.com/api?v=3.0&ak=${process.env.NEXT_PUBLIC_BAIDU_MAP_AK}&callback=initBaiduMap`
     script.async = true
     
     window.initBaiduMap = () => {
