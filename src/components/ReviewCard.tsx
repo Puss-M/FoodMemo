@@ -1,5 +1,11 @@
+'use client'
+
 import { Review } from '@/types'
-import { Clock } from 'lucide-react'
+import { Clock, Trash2, Loader2 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
 // Helper to format time (e.g. "2 hours ago")
 function timeAgo(dateString: string) {
@@ -20,12 +26,34 @@ function timeAgo(dateString: string) {
   return "刚刚"
 }
 
-export default function ReviewCard({ review }: { review: Review }) {
+export default function ReviewCard({ review, currentUserId }: { review: Review, currentUserId?: string }) {
+  const supabase = createClient()
+  const router = useRouter()
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleDelete = async () => {
+    if (!confirm('确定要删除这条评价吗？')) return
+
+    setIsDeleting(true)
+    const { error } = await supabase
+      .from('reviews')
+      .delete()
+      .eq('id', review.id)
+    
+    if (error) {
+      console.error('Error deleting review:', error)
+      toast.error('删除失败')
+      setIsDeleting(false)
+    } else {
+      toast.success('已删除')
+      router.refresh()
+    }
+  }
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-zinc-100 p-5 mb-4 hover:shadow-md transition-shadow">
       <div className="flex gap-4">
         {/* Avatar */}
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <img 
             src={review.profiles?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${review.profiles?.username || 'User'}`} 
             alt="Avatar" 
@@ -43,7 +71,7 @@ export default function ReviewCard({ review }: { review: Review }) {
           </div>
 
           {/* Content */}
-          <p className="text-zinc-800 whitespace-pre-wrap leading-relaxed mb-3 text-[15px]">
+          <p className="text-zinc-900 whitespace-pre-wrap leading-relaxed mb-3 text-[15px]">
             {review.content}
           </p>
 
@@ -53,7 +81,7 @@ export default function ReviewCard({ review }: { review: Review }) {
               <img 
                 src={review.image_url} 
                 alt="Review image" 
-                className="rounded-xl max-h-80 w-auto object-cover border border-zinc-100"
+                className="rounded-xl max-h-64 w-auto object-cover border border-zinc-100"
                 loading="lazy"
               />
             </div>
@@ -70,6 +98,20 @@ export default function ReviewCard({ review }: { review: Review }) {
                   {tag}
                 </span>
               ))}
+            </div>
+          )}
+
+          {/* Delete Button */}
+          {currentUserId === review.user_id && (
+            <div className="flex justify-end mt-2">
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="text-zinc-300 hover:text-red-500 transition-colors p-1"
+                title="删除"
+              >
+                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              </button>
             </div>
           )}
         </div>

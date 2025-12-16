@@ -4,8 +4,11 @@ import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Image as ImageIcon, Send, X, Loader2 } from 'lucide-react'
 import { Session } from '@supabase/supabase-js'
+import { toast } from 'sonner'
 
-export default function Publisher({ session, onPostSuccess }: { session: Session, onPostSuccess: () => void }) {
+const PRESET_TAGS = ['👍 推荐', '💣 避雷', '🏫 食堂']
+
+export default function Publisher({ session, onPostSuccess }: { session: Session, onPostSuccess: () => Promise<void> | void }) {
   const supabase = createClient()
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
@@ -26,6 +29,11 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
     setImageFile(null)
     setImagePreview(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const addTag = (tag: string) => {
+    const newTags = tags ? `${tags} ${tag}` : tag
+    setTags(newTags.trim())
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,18 +86,19 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
       setContent('')
       setTags('')
       clearImage()
-      onPostSuccess()
+      toast.success('发布成功！')
+      await onPostSuccess()
 
     } catch (error) {
       console.error('Error posting review:', error)
-      alert('发布失败，请重试')
+      toast.error('发布失败，请重试')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-zinc-100 p-4 mb-6 transition-all focus-within:ring-2 ring-orange-100">
+    <div className="bg-white rounded-xl shadow-sm border border-zinc-100 p-4 mb-6 transition-all hover:shadow-md focus-within:ring-2 ring-orange-100 focus-within:ring-offset-2">
       <form onSubmit={handleSubmit}>
         <textarea
           value={content}
@@ -112,8 +121,21 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-2 border-t border-zinc-50 mt-2">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-wrap gap-2 mb-3 mt-1">
+          {PRESET_TAGS.map(tag => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => addTag(tag)}
+              className="text-xs px-2 py-1 bg-orange-50 text-orange-600 rounded-full hover:bg-orange-100 transition-colors"
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between pt-3 border-t border-zinc-50">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -133,15 +155,15 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
               type="text"
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              placeholder="#标签 (空格分隔)"
-              className="text-sm bg-zinc-50 border-none rounded-lg px-3 py-1.5 w-40 focus:ring-1 focus:ring-orange-200 text-zinc-600 placeholder:text-zinc-400"
+              placeholder="#标签"
+              className="text-sm bg-transparent border-none p-0 w-40 focus:ring-0 text-zinc-600 placeholder:text-zinc-300"
             />
           </div>
 
           <button
             type="submit"
             disabled={!content.trim() || loading}
-            className="bg-zinc-900 hover:bg-orange-500 text-white rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 disabled:hover:bg-zinc-900 flex items-center gap-2"
+            className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-6 py-2 text-sm font-medium transition-colors disabled:opacity-50 disabled:hover:bg-orange-500 flex items-center gap-2 shadow-sm hover:shadow-orange-200"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>发布 <Send className="w-3 h-3" /></>}
           </button>
