@@ -1,7 +1,7 @@
 'use client'
 
 import { Review } from '@/types'
-import { Clock, Trash2, Loader2, Heart, MapPin } from 'lucide-react'
+import { Clock, Trash2, Loader2, Heart, MapPin, Bookmark } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -33,19 +33,14 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
   
-  // Optimistic UI State
-  // Initial state logic:
-  // 1. Check if current user is in the map/list of likers (if backend returns it)
-  // For now we default to false or passed prop if available. 
-  // Ideally, 'review' object should have 'is_liked_by_user' boolean from a join.
-  // We'll trust the user to have updated the backend view or simply default to false until fetch.
-  // BUT: To make it work immediately without backend join changes, we might need a separate fetch. 
-  // However, simpler is to just handle the toggle logic first.
+  // States
   const [isLiked, setIsLiked] = useState(false) 
-  const [likeCount, setLikeCount] = useState(0) // Default to 0 if no count provided
+  const [likeCount, setLikeCount] = useState(0)
+  const [isBookmarked, setIsBookmarked] = useState(false)
 
-  // Fetch initial like state (Client-side fetch for v6.0 quick fix)
+  // Fetch initial states
   useEffect(() => {
+    // Like State
     if (currentUserId) {
         supabase.from('fm_likes')
         .select('*', { count: 'exact', head: true })
@@ -55,8 +50,19 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
             const count = res.count
             if (count && count > 0) setIsLiked(true)
         })
+
+        // Bookmark State
+        supabase.from('fm_bookmarks')
+        .select('*', { count: 'exact', head: true })
+        .eq('review_id', review.id)
+        .eq('user_id', currentUserId)
+        .then((res: any) => {
+            const count = res.count
+            if (count && count > 0) setIsBookmarked(true)
+        })
     }
-    // Get total likes
+    
+    // Total Likes
     supabase.from('fm_likes')
         .select('*', { count: 'exact', head: true })
         .eq('review_id', review.id)
@@ -73,7 +79,6 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
         return
     }
 
-    // Optimistic Update
     const previousState = isLiked
     const previousCount = likeCount
     
@@ -82,17 +87,41 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
 
     try {
         if (previousState) {
-            // Unlike
             await supabase.from('fm_likes').delete().match({ user_id: currentUserId, review_id: review.id })
         } else {
-            // Like
             await supabase.from('fm_likes').insert({ user_id: currentUserId, review_id: review.id })
         }
     } catch (err) {
-        // Revert on error
         console.error('Like toggle failed', err)
         setIsLiked(previousState)
         setLikeCount(previousCount)
+        toast.error('操作失败')
+    }
+  }
+
+  const handleToggleBookmark = async () => {
+    if (!currentUserId) {
+        toast.error('请先登录')
+        router.push('/login')
+        return
+    }
+
+    const previousState = isBookmarked
+    setIsBookmarked(!previousState)
+
+    try {
+        if (previousState) {
+             // Remove bookmark
+             await supabase.from('fm_bookmarks').delete().match({ user_id: currentUserId, review_id: review.id })
+             toast.success('已取消收藏')
+        } else {
+             // Add bookmark
+             await supabase.from('fm_bookmarks').insert({ user_id: currentUserId, review_id: review.id })
+             toast.success('已收藏')
+        }
+    } catch (err) {
+        console.error('Bookmark toggle failed', err)
+        setIsBookmarked(previousState)
         toast.error('操作失败')
     }
   }
@@ -112,7 +141,6 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
       setIsDeleting(false)
     } else {
       toast.success('已删除')
-      // Force page refresh to update the list
       setTimeout(() => {
         router.refresh()
         window.location.reload()
@@ -187,15 +215,27 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
           )}
 
           <div className="flex items-center justify-between mt-3 pt-2 border-t border-zinc-50">
-            <button 
-              onClick={handleToggleLike}
-              className="group flex items-center gap-1.5 text-zinc-400 hover:text-red-500 transition-colors"
-            >
-              <Heart className={`w-4 h-4 transition-all ${isLiked ? 'fill-red-500 text-red-500 scale-110' : 'group-hover:scale-110'}`} />
-              <span className={`text-xs font-medium ${isLiked ? 'text-red-500' : ''}`}>
-                {likeCount > 0 ? likeCount : '赞'}
-              </span>
-            </button>
+            <div className="flex items-center gap-4">
+                <button 
+                onClick={handleToggleLike}
+                className="group flex items-center gap-1.5 text-zinc-400 hover:text-red-500 transition-colors"
+                >
+                <Heart className={`w-4 h-4 transition-all ${isLiked ? 'fill-red-500 text-red-500 scale-110' : 'group-hover:scale-110'}`} />
+                <span className={`text-xs font-medium ${isLiked ? 'text-red-500' : ''}`}>
+                    {likeCount > 0 ? likeCount : '赞'}
+                </span>
+                </button>
+
+                <button 
+                onClick={handleToggleBookmark}
+                className="group flex items-center gap-1.5 text-zinc-400 hover:text-orange-500 transition-colors"
+                >
+                <Bookmark className={`w-4 h-4 transition-all ${isBookmarked ? 'fill-orange-500 text-orange-500 scale-110' : 'group-hover:scale-110'}`} />
+                <span className={`text-xs font-medium ${isBookmarked ? 'text-orange-500' : ''}`}>
+                    {isBookmarked ? '已收藏' : '收藏'}
+                </span>
+                </button>
+            </div>
 
             {currentUserId === review.user_id && (
               <button
