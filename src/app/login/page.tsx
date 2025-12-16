@@ -51,14 +51,14 @@ function LoginForm() {
           throw new Error('无效的邀请码，请检查后重试')
         }
 
-        // 2. Sign Up
+        // 2. Sign Up - Note: inviter.id is the user_id (profiles.id = auth.users.id)
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
               username,
-              invited_by: inviter.id, // Record who invited this user
+              invited_by: inviter.id, // This is correct: profiles.id = auth.users.id
             },
           },
         })
