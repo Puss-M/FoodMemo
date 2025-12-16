@@ -125,6 +125,29 @@ export default function ProfileView({ profile, stats, userId }: any) {
                         <div className="text-xs text-zinc-400 uppercase tracking-wider font-medium mt-1">关注</div>
                     </div>
                 </div>
+
+                {/* Invite Code Section */}
+                {profile?.invite_code && (
+                    <div className="w-full border-t border-zinc-50 pt-6 mt-6">
+                        <h4 className="text-xs text-zinc-400 uppercase tracking-wider font-medium mb-3">我的邀请码</h4>
+                        <div className="flex items-center gap-3">
+                            <div className="flex-1 bg-zinc-50 px-4 py-3 rounded-lg font-mono text-lg font-bold text-zinc-900 tracking-wider">
+                                {profile.invite_code}
+                            </div>
+                            <button
+                                onClick={() => {
+                                    const inviteLink = `${window.location.origin}/login?code=${profile.invite_code}`
+                                    navigator.clipboard.writeText(inviteLink)
+                                    alert('邀请链接已复制！')
+                                }}
+                                className="px-4 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                            >
+                                复制邀请链接
+                            </button>
+                        </div>
+                        <p className="text-xs text-zinc-400 mt-2">分享邀请链接给信任的朋友，让他们加入 FoodMemo</p>
+                    </div>
+                )}
             </div>
 
             {/* Achievements Badge Wall */}

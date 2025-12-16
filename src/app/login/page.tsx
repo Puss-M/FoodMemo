@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Check, Loader2, Lock, Mail, KeyRound, AlertCircle } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClient()
   
   const [isRegister, setIsRegister] = useState(false)
@@ -18,6 +19,15 @@ export default function LoginPage() {
   const [inviteCode, setInviteCode] = useState('')
   const [username, setUsername] = useState('') // Adding username as per profiles table
 
+  // Auto-fill invite code from URL parameter
+  useEffect(() => {
+    const code = searchParams.get('code')
+    if (code) {
+      setInviteCode(code.toUpperCase())
+      setIsRegister(true) // Auto switch to register mode
+    }
+  }, [searchParams])
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -25,20 +35,20 @@ export default function LoginPage() {
 
     try {
       if (isRegister) {
-        // 1. Verify Invitation Code (Reusable - 可复用)
-        const { data: codes, error: codeError } = await supabase
-          .from('invitation_codes')
-          .select('*')
-          .eq('code', inviteCode)
-          .maybeSingle() // Use maybeSingle instead of single to avoid error on 0 rows
+        // 1. Verify Invitation Code from profiles table
+        const { data: inviter, error: codeError } = await supabase
+          .from('profiles')
+          .select('id, username, invite_code')
+          .eq('invite_code', inviteCode.trim().toUpperCase())
+          .maybeSingle()
 
         if (codeError) {
           console.error('Invitation Check Error:', codeError)
           throw new Error(`系统错误: ${codeError.message}`)
         }
 
-        if (!codes) {
-          throw new Error('无效的邀请码，本站仅限内部访问')
+        if (!inviter) {
+          throw new Error('无效的邀请码，请检查后重试')
         }
 
         // 2. Sign Up
@@ -48,6 +58,7 @@ export default function LoginPage() {
           options: {
             data: {
               username,
+              invited_by: inviter.id, // Record who invited this user
             },
           },
         })
@@ -55,10 +66,11 @@ export default function LoginPage() {
         if (authError) throw authError
         if (!authData.user) throw new Error('注册失败，请重试')
 
-        // Profile 会由数据库触发器自动创建
+        // Profile will be auto-created by database trigger with invite_code
+        // invited_by will be set from user metadata
         console.log('Registration successful, profile auto-created by trigger')
 
-        // Auto-login and redirect (无需手动登录)
+        // Auto-login and redirect
         router.push('/')
         router.refresh()
 
