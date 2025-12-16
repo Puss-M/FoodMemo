@@ -17,6 +17,8 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
   const [loading, setLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [isExpanded, setIsExpanded] = useState(false)
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
@@ -88,6 +90,7 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
       clearImage()
       toast.success('发布成功！')
       await onPostSuccess()
+      setIsExpanded(false)
 
     } catch (error) {
       console.error('Error posting review:', error)
@@ -97,16 +100,42 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
     }
   }
 
+  if (!isExpanded) {
+    return (
+      <div 
+        onClick={() => setIsExpanded(true)}
+        className="bg-white rounded-full shadow-sm border border-zinc-100 p-2 mb-8 cursor-pointer hover:shadow-md transition-all flex items-center gap-3"
+      >
+        <div className="w-10 h-10 rounded-full bg-zinc-100 overflow-hidden ml-1 shrink-0">
+           <img 
+              src={`https://api.dicebear.com/7.x/initials/svg?seed=${session.user.email}`} 
+              alt="Avatar" 
+              className="w-full h-full object-cover"
+            />
+        </div>
+        <div className="text-zinc-400 text-sm font-medium flex-1">
+          发现宝藏餐厅了？推荐给兄弟们...
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-zinc-100 p-4 mb-6 transition-all hover:shadow-md focus-within:ring-2 ring-orange-100 focus-within:ring-offset-2">
+    <div className="bg-white rounded-xl shadow-sm border border-zinc-100 p-4 mb-6 transition-all animate-in fade-in zoom-in-95 duration-200">
       <form onSubmit={handleSubmit}>
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="今天吃了什么？真实评价..."
-          className="w-full text-zinc-800 placeholder:text-zinc-400 text-lg resize-none outline-none min-h-[80px]"
-          rows={3}
-        />
+        <div className="flex justify-between items-start mb-2">
+           <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="今天吃了什么？真实评价..."
+            className="w-full text-zinc-800 placeholder:text-zinc-400 text-lg resize-none outline-none min-h-[80px]"
+            rows={3}
+            autoFocus
+          />
+          <button type="button" onClick={() => setIsExpanded(false)} className="text-zinc-300 hover:text-zinc-500">
+             <X className="w-5 h-5" />
+          </button>
+        </div>
         
         {imagePreview && (
           <div className="relative inline-block mt-2 mb-4">

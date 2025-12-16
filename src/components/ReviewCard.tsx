@@ -1,7 +1,7 @@
 'use client'
 
 import { Review } from '@/types'
-import { Clock, Trash2, Loader2 } from 'lucide-react'
+import { Clock, Trash2, Loader2, Heart } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -30,6 +30,7 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
   const supabase = createClient()
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isLiked, setIsLiked] = useState(false)
 
   const handleDelete = async () => {
     if (!confirm('确定要删除这条评价吗？')) return
@@ -101,9 +102,18 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
             </div>
           )}
 
-          {/* Delete Button */}
-          {currentUserId === review.user_id && (
-            <div className="flex justify-end mt-2">
+          <div className="flex items-center justify-between mt-3 pt-2 border-t border-zinc-50">
+            <button 
+              onClick={() => setIsLiked(!isLiked)}
+              className="group flex items-center gap-1.5 text-zinc-400 hover:text-red-500 transition-colors"
+            >
+              <Heart className={`w-4 h-4 transition-all ${isLiked ? 'fill-red-500 text-red-500 scale-110' : 'group-hover:scale-110'}`} />
+              <span className={`text-xs font-medium ${isLiked ? 'text-red-500' : ''}`}>
+                {isLiked ? 59 : 58}
+              </span>
+            </button>
+
+            {currentUserId === review.user_id && (
               <button
                 onClick={handleDelete}
                 disabled={isDeleting}
@@ -112,8 +122,8 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
               >
                 {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -1,0 +1,102 @@
+'use client'
+
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import { Utensils, Home, User, Heart, LogOut } from 'lucide-react'
+import { useEffect, useState } from 'react'
+
+export default function LeftSidebar() {
+  const supabase = createClient()
+  const router = useRouter()
+  const [profile, setProfile] = useState<any>(null)
+
+  useEffect(() => {
+    const getProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        setProfile(data)
+      }
+    }
+    getProfile()
+  }, [])
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.refresh()
+    router.push('/login')
+  }
+
+  const navItems = [
+    { icon: Home, label: '广场首页', active: true },
+    { icon: User, label: '我的评价', active: false },
+    { icon: Heart, label: '我的收藏', active: false },
+  ]
+
+  return (
+    <aside className="hidden lg:flex w-64 sticky top-4 h-[calc(100vh-2rem)] flex-col gap-6">
+      {/* Logo Area */}
+      <div className="flex items-center gap-2 text-orange-600 font-bold text-2xl px-4 py-2">
+        <Utensils className="w-8 h-8" />
+        <span>FoodMemo</span>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex-1 space-y-1">
+        {navItems.map((item) => (
+          <button
+            key={item.label}
+            className={`w-full flex items-center gap-4 px-4 py-3 rounded-full text-lg font-medium transition-colors ${
+              item.active 
+                ? 'bg-orange-50 text-orange-600 font-bold' 
+                : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
+            }`}
+          >
+            <item.icon className={`w-7 h-7 ${item.active ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+            {item.label}
+          </button>
+        ))}
+      </nav>
+
+      {/* User Stats Card */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-zinc-100">
+        <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-full bg-zinc-100 overflow-hidden">
+                <img 
+                    src={profile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile?.username || 'User'}`} 
+                    alt="User" 
+                    className="w-full h-full object-cover"
+                />
+            </div>
+            <div className="flex-1 min-w-0">
+                <div className="font-bold text-lg truncate">{profile?.username || 'Loading...'}</div>
+                <div className="text-xs text-zinc-400">@{profile?.username || 'user'}</div>
+            </div>
+        </div>
+        
+        <div className="flex justify-between border-t border-zinc-50 pt-3 mb-3">
+            <div className="text-center flex-1 border-r border-zinc-50 last:border-0">
+                <div className="text-xl font-bold text-zinc-900">12</div>
+                <div className="text-xs text-zinc-400">发布</div>
+            </div>
+            <div className="text-center flex-1">
+                <div className="text-xl font-bold text-zinc-900">58</div>
+                <div className="text-xs text-zinc-400">获赞</div>
+            </div>
+        </div>
+
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 py-2 rounded-lg transition-colors text-sm"
+        >
+          <LogOut className="w-4 h-4" />
+          退出登录
+        </button>
+      </div>
+    </aside>
+  )
+}
