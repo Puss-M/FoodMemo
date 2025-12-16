@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MapPin, X, Search } from 'lucide-react'
+import { MapPin, X } from 'lucide-react'
 
 interface LocationPickerProps {
   onLocationSelect: (location: { name: string; address: string; lat: number; lng: number }) => void
@@ -31,6 +31,20 @@ export default function LocationPicker({ onLocationSelect, onClose }: LocationPi
       delete window.initBaiduMap
     }
   }, [])
+
+  // 自动搜索：当输入内容变化时，延迟500ms后自动搜索
+  useEffect(() => {
+    if (!keyword.trim() || !mapLoaded) {
+      setResults([])
+      return
+    }
+
+    const timer = setTimeout(() => {
+      handleSearch()
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [keyword, mapLoaded])
 
   const handleSearch = async () => {
     if (!keyword.trim() || !mapLoaded) return
@@ -79,19 +93,16 @@ export default function LocationPicker({ onLocationSelect, onClose }: LocationPi
             type="text"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
             placeholder="搜索地点（如：西南财经大学）"
             className="flex-1 outline-none text-lg"
             autoFocus
           />
-          <button
-            onClick={handleSearch}
-            disabled={loading || !mapLoaded}
-            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 disabled:opacity-50 flex items-center gap-2"
-          >
-            <Search className="w-4 h-4" />
-            {loading ? '搜索中...' : '搜索'}
-          </button>
+          {loading && (
+            <div className="text-sm text-zinc-400 flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+              搜索中...
+            </div>
+          )}
           <button onClick={onClose} className="p-2 hover:bg-zinc-100 rounded-lg">
             <X className="w-5 h-5" />
           </button>
