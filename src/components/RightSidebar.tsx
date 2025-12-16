@@ -178,6 +178,11 @@ export default function RightSidebar() {
             {announcement}
           </p>
        </div>
+
+       {/* Subtle Signature */}
+       <div className="text-center mt-2">
+         <p className="text-[10px] text-zinc-300 font-mono">CinyaMa</p>
+       </div>
     </aside>
   )
 }
