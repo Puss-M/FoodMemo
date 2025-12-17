@@ -45,10 +45,13 @@ export default function ChatWindow({ currentUserId, targetUser, onClose }: ChatW
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `or(and(sender_id.eq.${currentUserId},receiver_id.eq.${targetUser.id}),and(sender_id.eq.${targetUser.id},receiver_id.eq.${currentUserId}))`
+          filter: `receiver_id=eq.${currentUserId}`
         },
         (payload: { new: Message }) => {
-          setMessages(prev => [...prev, payload.new])
+          // Only add if it's from the person we are chatting with
+          if (payload.new.sender_id === targetUser.id) {
+            setMessages(prev => [...prev, payload.new])
+          }
         }
       )
       .subscribe()
@@ -93,10 +96,21 @@ export default function ChatWindow({ currentUserId, targetUser, onClose }: ChatW
     if (error) {
       toast.error('发送失败')
       console.error(error)
+      setSending(false)
     } else {
       setNewMessage('')
+      setSending(false)
+      // Optimistic update (or rather, confirms successful send)
+      const sentMsg: Message = {
+          id: 'temp-' + Date.now(),
+          sender_id: currentUserId,
+          receiver_id: targetUser.id,
+          content: newMessage.trim(),
+          is_read: false,
+          created_at: new Date().toISOString()
+      }
+      setMessages(prev => [...prev, sentMsg])
     }
-    setSending(false)
   }
 
   const timeAgo = (dateString: string) => {
@@ -115,7 +129,7 @@ export default function ChatWindow({ currentUserId, targetUser, onClose }: ChatW
   return (
     <div className="fixed bottom-4 right-4 w-80 h-96 bg-white rounded-2xl shadow-2xl border border-zinc-200 flex flex-col z-50 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-zinc-100 bg-gradient-to-r from-orange-500 to-orange-400">
+      <div className="flex items-center justify-between p-3 border-b border-zinc-100 bg-linear-to-r from-orange-500 to-orange-400">
         <div className="flex items-center gap-2">
           <img
             src={targetUser.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${targetUser.username}`}

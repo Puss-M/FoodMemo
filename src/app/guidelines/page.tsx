@@ -36,7 +36,7 @@ export default function GuidelinesPage() {
         </div>
 
         {/* Welcome */}
-        <div className="bg-gradient-to-r from-orange-500 to-orange-400 rounded-2xl p-6 text-white mb-8 shadow-lg shadow-orange-500/20">
+        <div className="bg-linear-to-r from-orange-500 to-orange-400 rounded-2xl p-6 text-white mb-8 shadow-lg shadow-orange-500/20">
           <p className="text-lg leading-relaxed">
             欢迎来到 <strong>FoodMemo</strong>！这是一个基于熟人信任链的高质量美食分享小圈子。
             我们致力于解决"去哪吃"的终极难题，<strong>拒绝广子，只说真话</strong>。

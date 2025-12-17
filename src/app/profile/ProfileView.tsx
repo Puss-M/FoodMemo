@@ -240,7 +240,7 @@ export default function ProfileView({ profile, stats, userId, inviteCodes }: any
                         {achievements.map((ua: any) => (
                             <div
                                 key={ua.id}
-                                className="flex flex-col items-center p-4 rounded-xl bg-gradient-to-br from-orange-50 to-yellow-50 border border-orange-100 hover:shadow-md transition-shadow"
+                                className="flex flex-col items-center p-4 rounded-xl bg-linear-to-br from-orange-50 to-yellow-50 border border-orange-100 hover:shadow-md transition-shadow"
                                 title={ua.achievements.description}
                             >
                                 <div className="text-4xl mb-2">{ua.achievements.icon}</div>
