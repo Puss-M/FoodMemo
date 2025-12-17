@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import CommentSection from './CommentSection'
 import { useComposerStore } from '@/store/useComposerStore'
+import { useFollowStore } from '@/store/useFollowStore'
 
 // Helper to format time (e.g. "2 hours ago")
 function timeAgo(dateString: string) {
@@ -38,7 +39,10 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
   const [isLiked, setIsLiked] = useState(false) 
   const [likeCount, setLikeCount] = useState(0)
   const [isBookmarked, setIsBookmarked] = useState(false)
-  const [isFollowing, setIsFollowing] = useState(false)
+  
+  // Use global follow store
+  const { isFollowingUser, setFollowStatus } = useFollowStore()
+  const isFollowing = isFollowingUser(review.user_id)
 
   // Fetch initial states
   useEffect(() => {
@@ -71,7 +75,8 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
             .eq('following_id', review.user_id)
             .then((res: any) => {
                 const count = res.count
-                if (count && count > 0) setIsFollowing(true)
+                // Sync to global store
+                setFollowStatus(review.user_id, !!(count && count > 0))
             })
         }
     }
@@ -146,7 +151,8 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
     }
 
     const previousState = isFollowing
-    setIsFollowing(!previousState)
+    // Optimistic update
+    setFollowStatus(review.user_id, !previousState)
 
     try {
         if (previousState) {
@@ -158,7 +164,8 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
         }
     } catch (err) {
         console.error('Follow toggle failed', err)
-        setIsFollowing(previousState)
+        // Revert on error
+        setFollowStatus(review.user_id, previousState)
         toast.error('操作失败')
     }
   }
