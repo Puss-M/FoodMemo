@@ -293,18 +293,30 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
             </div>
           )}
 
-          {/* Footer / Tags */}
+          {/* Footer / Tags - Color coded by type */}
           {review.tags && review.tags.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {review.tags.map((tag, idx) => (
-                <Link 
-                  href={`/?tag=${encodeURIComponent(tag)}`}
-                  key={idx} 
-                  className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors"
-                >
-                  {tag}
-                </Link>
-              ))}
+              {review.tags.map((tag, idx) => {
+                // Determine tag color based on type
+                const isScenario = ['👤 一人食', '👩‍❤️‍👨 约会', '👯 朋友聚餐', '🍻 部门团建', '💼 商务'].includes(tag)
+                const isCuisine = ['川菜', '火锅', '粤菜', '湘菜', '烧烤', '日韩', '西餐', '甜点', '面食', '小吃'].includes(tag)
+                
+                return (
+                  <Link 
+                    href={`/?tag=${encodeURIComponent(tag)}`}
+                    key={idx} 
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                      isScenario 
+                        ? 'bg-blue-50 text-blue-600 hover:bg-blue-100'
+                        : isCuisine
+                          ? 'bg-orange-50 text-orange-600 hover:bg-orange-100'
+                          : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                    }`}
+                  >
+                    {tag}
+                  </Link>
+                )
+              })}
             </div>
           )}
 

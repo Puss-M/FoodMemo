@@ -10,6 +10,10 @@ import { useComposerStore } from '@/store/useComposerStore'
 
 const PRESET_TAGS = ['👍 推荐', '💣 避雷', '🏫 食堂']
 
+// v9.1: Structured tag options
+const CUISINE_OPTIONS = ['川菜', '火锅', '粤菜', '湘菜', '烧烤', '日韩', '西餐', '甘点', '面食', '小吃']
+const SCENARIO_OPTIONS = ['👤 一人食', '👩‍❤️‍👨 约会', '👯 朋友聚餐', '🍻 部门团建', '💼 商务']
+
 // Helper to compress image
 const compressImage = async (file: File): Promise<File> => {
   return new Promise((resolve, reject) => {
@@ -74,6 +78,10 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
   const [selectedLocation, setSelectedLocation] = useState<{name: string, lat: number, lng: number} | null>(null)
 
   const MAX_IMAGES = 9
+
+  // v9.1: Structured tag selections
+  const [selectedCuisine, setSelectedCuisine] = useState<string | null>(null)
+  const [selectedScenario, setSelectedScenario] = useState<string | null>(null)
 
   // Zustand store for withdraw-to-edit
   const { draft, clearDraft, hasDraft } = useComposerStore()
@@ -170,20 +178,26 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
         }
       }
 
-      // Insert Review
-      const tagArray = tags
+      // Insert Review - Merge structured tags with manual tags
+      const manualTags = tags
         .split(' ')
         .filter(t => t.startsWith('#'))
         .map(t => t.trim())
+      
+      // Combine: cuisine + scenario + manual tags
+      const allTags: string[] = []
+      if (selectedCuisine) allTags.push(selectedCuisine)
+      if (selectedScenario) allTags.push(selectedScenario)
+      allTags.push(...manualTags)
 
       const { error: insertError } = await supabase
         .from('reviews')
         .insert({
           user_id: session.user.id,
           content: content,
-          image_url: imageUrls.length > 0 ? imageUrls[0] : null, // Backward compat
-          image_urls: imageUrls.length > 0 ? imageUrls : null,   // New multi-image
-          tags: tagArray.length > 0 ? tagArray : null,
+          image_url: imageUrls.length > 0 ? imageUrls[0] : null,
+          image_urls: imageUrls.length > 0 ? imageUrls : null,
+          tags: allTags.length > 0 ? allTags : null,
           location_name: selectedLocation?.name,
           location_coords: selectedLocation ? { lat: selectedLocation.lat, lng: selectedLocation.lng } : null
         })
@@ -192,6 +206,8 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
 
       setContent('')
       setTags('')
+      setSelectedCuisine(null)
+      setSelectedScenario(null)
       clearAllImages()
       setSelectedLocation(null)
       toast.success('发布成功！')
@@ -279,26 +295,56 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
             </div>
           )}
 
-          <div className="flex flex-wrap gap-2 mb-3 mt-1">
-            {['川菜', '火锅', '烧烤', '小吃', '饮品', '食堂', '西餐'].map(cuisine => (
-               <button
-                key={cuisine}
-                type="button"
-                onClick={() => addTag(`#${cuisine}`)}
-                className="text-xs px-3 py-1.5 rounded-full border border-zinc-100 bg-white text-zinc-600 hover:border-orange-200 hover:text-orange-600 transition-colors whitespace-nowrap"
-              >
-                {cuisine}
-              </button>
-            ))}
+          {/* v9.1: Cuisine Selection */}
+          <div className="mb-3 mt-1">
+            <div className="text-xs text-zinc-400 mb-2 font-medium">🍽️ 菜系</div>
+            <div className="flex flex-wrap gap-2">
+              {CUISINE_OPTIONS.map(cuisine => (
+                <button
+                  key={cuisine}
+                  type="button"
+                  onClick={() => setSelectedCuisine(selectedCuisine === cuisine ? null : cuisine)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors whitespace-nowrap ${
+                    selectedCuisine === cuisine
+                      ? 'bg-orange-500 text-white border-orange-500'
+                      : 'border-zinc-200 bg-white text-zinc-600 hover:border-orange-300 hover:text-orange-600'
+                  }`}
+                >
+                  {cuisine}
+                </button>
+              ))}
+            </div>
           </div>
 
+          {/* v9.1: Scenario Selection */}
+          <div className="mb-3">
+            <div className="text-xs text-zinc-400 mb-2 font-medium">🎯 场景</div>
+            <div className="flex flex-wrap gap-2">
+              {SCENARIO_OPTIONS.map(scenario => (
+                <button
+                  key={scenario}
+                  type="button"
+                  onClick={() => setSelectedScenario(selectedScenario === scenario ? null : scenario)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors whitespace-nowrap ${
+                    selectedScenario === scenario
+                      ? 'bg-blue-500 text-white border-blue-500'
+                      : 'border-zinc-200 bg-white text-zinc-600 hover:border-blue-300 hover:text-blue-600'
+                  }`}
+                >
+                  {scenario}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick preset tags */}
           <div className="flex flex-wrap gap-2 mb-3">
             {PRESET_TAGS.map(tag => (
               <button
                 key={tag}
                 type="button"
                 onClick={() => addTag(tag)}
-                className="text-xs px-2 py-1 bg-orange-50 text-orange-600 rounded-full hover:bg-orange-100 transition-colors"
+                className="text-xs px-2 py-1 bg-zinc-100 text-zinc-600 rounded-full hover:bg-zinc-200 transition-colors"
               >
                 {tag}
               </button>
