@@ -32,7 +32,7 @@ export default async function UserProfilePage({ params }: { params: Promise<{ id
     .select('*', { count: 'exact', head: true })
     .in('review_id', (
       await supabase.from('reviews').select('id').eq('user_id', id)
-    ).data?.map(r => r.id) || [])
+    ).data?.map((r: any) => r.id) || [])
 
   const { count: bookmarksMade } = await supabase
     .from('fm_bookmarks')
