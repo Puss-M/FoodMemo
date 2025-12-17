@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Check, Loader2, Lock, Mail, KeyRound, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 
 function LoginForm() {
   const router = useRouter()
@@ -35,44 +36,35 @@ function LoginForm() {
 
     try {
       if (isRegister) {
-        // 1. Verify Invitation Code from profiles table
-        const { data: inviter, error: codeError } = await supabase
-          .from('profiles')
-          .select('id, username, invite_code')
-          .eq('invite_code', inviteCode.trim().toUpperCase())
-          .maybeSingle()
+        // Use Server Action for Secure Registration
+        const formData = new FormData()
+        formData.append('email', email)
+        formData.append('password', password)
+        formData.append('inviteCode', inviteCode)
+        formData.append('username', username)
 
-        if (codeError) {
-          console.error('Invitation Check Error:', codeError)
-          throw new Error(`系统错误: ${codeError.message}`)
+        const { register } = await import('@/app/actions') // Dynamic import to avoid build issues if file not found initially
+        const result = await register(null, formData)
+
+        if (result?.error) {
+          throw new Error(`注册失败: ${result.error}`)
         }
 
-        if (!inviter) {
-          throw new Error('无效的邀请码，请检查后重试')
+        if (result?.success) {
+           // Auto login after registration
+           const { error: loginError } = await supabase.auth.signInWithPassword({
+             email,
+             password
+           })
+           if (loginError) throw loginError
+
+           toast.success('注册成功！', {
+             description: '欢迎加入 FoodMemo'
+           })
+           
+           router.push('/')
+           router.refresh()
         }
-
-        // 2. Sign Up - Note: inviter.id is the user_id (profiles.id = auth.users.id)
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              username,
-              invited_by: inviter.id, // This is correct: profiles.id = auth.users.id
-            },
-          },
-        })
-
-        if (authError) throw authError
-        if (!authData.user) throw new Error('注册失败，请重试')
-
-        // Profile will be auto-created by database trigger with invite_code
-        // invited_by will be set from user metadata
-        console.log('Registration successful, profile auto-created by trigger')
-
-        // Auto-login and redirect
-        router.push('/')
-        router.refresh()
 
       } else {
         // Login
@@ -86,7 +78,9 @@ function LoginForm() {
         router.refresh()
       }
     } catch (err: any) {
+      console.error(err)
       setError(err.message || '发生错误')
+      toast.error(err.message || '操作失败')
     } finally {
       setLoading(false)
     }
@@ -100,7 +94,7 @@ function LoginForm() {
             FoodMemo
           </h1>
           <p className="text-sm text-zinc-500 mt-2">
-            {isRegister ? '加入内部美食圈' : '欢迎回来'}
+            {isRegister ? '加入内部美食圈 (v8.0)' : '欢迎回来'}
           </p>
         </div>
 

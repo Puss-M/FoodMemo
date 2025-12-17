@@ -34,6 +34,19 @@ export default async function ProfilePage() {
     .eq('user_id', userId)
     .single()
 
+  // 4. Fetch Generated Invitation Codes
+  const { data: inviteCodes } = await supabase
+    .from('fm_invitation_codes')
+    .select(`
+      *,
+      invitee:used_by (
+        username,
+        avatar_url
+      )
+    `)
+    .eq('generated_by', userId)
+    .order('created_at', { ascending: false })
+
   return (
     <main className="min-h-screen bg-zinc-50 lg:bg-stone-50">
       <Navbar />
@@ -46,6 +59,7 @@ export default async function ProfilePage() {
                 profile={profile} 
                 stats={stats} 
                 userId={userId} 
+                inviteCodes={inviteCodes || []}
             />
             
             <div className="mt-12 text-center text-xs text-zinc-300 font-light">

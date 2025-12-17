@@ -235,12 +235,17 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
 
           {/* Image */}
           {review.image_url && (
-            <div className="mb-3">
+            <div className="mb-3 mt-2">
               <img 
                 src={review.image_url} 
                 alt="Review image" 
-                className="rounded-xl max-h-64 w-auto object-cover border border-zinc-100"
+                className="w-full h-48 object-cover rounded-lg border border-zinc-100 bg-zinc-50"
                 loading="lazy"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  window.open(review.image_url!, '_blank')
+                }} // Simple click to view full size
               />
             </div>
           )}

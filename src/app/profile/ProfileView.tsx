@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import ReviewCard from '@/components/ReviewCard'
 import Link from 'next/link'
 
-export default function ProfileView({ profile, stats, userId }: any) {
+export default function ProfileView({ profile, stats, userId, inviteCodes }: any) {
     const supabase = createClient()
     const [activeTab, setActiveTab] = useState<'posts' | 'likes' | 'saved'>('posts')
     const [reviews, setReviews] = useState<any[]>([])
@@ -126,28 +126,95 @@ export default function ProfileView({ profile, stats, userId }: any) {
                     </div>
                 </div>
 
-                {/* Invite Code Section */}
-                {profile?.invite_code && (
-                    <div className="w-full border-t border-zinc-50 pt-6 mt-6">
-                        <h4 className="text-xs text-zinc-400 uppercase tracking-wider font-medium mb-3">我的邀请码</h4>
-                        <div className="flex items-center gap-3">
-                            <div className="flex-1 bg-zinc-50 px-4 py-3 rounded-lg font-mono text-lg font-bold text-zinc-900 tracking-wider">
-                                {profile.invite_code}
-                            </div>
-                            <button
-                                onClick={() => {
-                                    const inviteLink = `${window.location.origin}/login?code=${profile.invite_code}`
-                                    navigator.clipboard.writeText(inviteLink)
-                                    alert('邀请链接已复制！')
-                                }}
-                                className="px-4 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
-                            >
-                                复制邀请链接
-                            </button>
-                        </div>
-                        <p className="text-xs text-zinc-400 mt-2">分享邀请链接给信任的朋友，让他们加入 FoodMemo</p>
-                    </div>
-                )}
+                {/* Invitation Center */}
+                <div className="w-full bg-white rounded-2xl p-6 shadow-sm border border-zinc-100 mb-6">
+                   <div className="flex items-center justify-between mb-4">
+                       <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
+                           <span>🎫</span>
+                           <span>邀请中心</span>
+                       </h3>
+                       <button
+                           onClick={async () => {
+                               const { generateInviteCode } = await import('@/app/actions')
+                               const toast = (await import('sonner')).toast
+                               
+                               const promise = generateInviteCode()
+                               toast.promise(promise, {
+                                   loading: '生成中...',
+                                   success: (result) => {
+                                       if (result.error) throw new Error(result.error)
+                                       // Refresh page to show new code
+                                       window.location.reload()
+                                       return `邀请码 ${result.code} 已生成`
+                                   },
+                                   error: (err) => err.message
+                               })
+                           }}
+                           className="text-sm bg-zinc-900 hover:bg-zinc-800 text-white px-4 py-2 rounded-lg transition-colors font-medium flex items-center gap-2"
+                       >
+                           生成邀请码
+                       </button>
+                   </div>
+                   
+                   {/* Invite Codes List */}
+                   <div className="space-y-3">
+                       {/* Show existing invite_code from profile if it exists and not in list? 
+                           Actually, profile.invite_code might have been a legacy field or the one they used to join.
+                           The prompt says: "Table: generated_by". 
+                           Let's trust `inviteCodes` prop.
+                        */}
+                       
+                       {(!inviteCodes || inviteCodes.length === 0) ? (
+                           <div className="text-center py-8 text-zinc-400 bg-zinc-50 rounded-xl border border-dashed border-zinc-200">
+                               <p className="text-sm">还没有生成过邀请码</p>
+                               <p className="text-xs mt-1">生成一个送给朋友吧</p>
+                           </div>
+                       ) : (
+                           inviteCodes.map((code: any) => (
+                               <div key={code.id} className="flex items-center justify-between p-3 bg-zinc-50 rounded-xl border border-zinc-100">
+                                   <div className="flex items-center gap-4">
+                                       <div className={`font-mono font-bold text-lg tracking-wider ${code.is_used ? 'text-zinc-400 decoration-zinc-400' : 'text-zinc-900'}`}>
+                                           {code.code}
+                                       </div>
+                                       {code.is_used ? (
+                                           <div className="flex items-center gap-2 bg-orange-50 text-orange-700 px-2 py-1 rounded-md text-xs">
+                                               <span className="opacity-70">已邀请</span>
+                                               {code.invitee ? (
+                                                   <div className="flex items-center gap-1 font-medium">
+                                                       <img 
+                                                           src={code.invitee.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${code.invitee.username}`} 
+                                                           alt="" 
+                                                           className="w-4 h-4 rounded-full" 
+                                                       />
+                                                       {code.invitee.username}
+                                                   </div>
+                                               ) : (
+                                                   <span>未知用户</span>
+                                               )}
+                                           </div>
+                                       ) : (
+                                           <span className="bg-green-50 text-green-700 px-2 py-1 rounded-md text-xs font-medium">未使用</span>
+                                       )}
+                                   </div>
+                                   
+                                   {!code.is_used && (
+                                       <button
+                                           onClick={() => {
+                                               const link = `${window.location.origin}/login?code=${code.code}`
+                                               navigator.clipboard.writeText(link)
+                                               // We need toast here, wait, usually imported top level
+                                               import('sonner').then(({ toast }) => toast.success('链接已复制'))
+                                           }}
+                                           className="text-xs text-zinc-500 hover:text-zinc-900 font-medium px-2 py-1 hover:bg-zinc-200 rounded transition-colors"
+                                       >
+                                           复制链接
+                                       </button>
+                                   )}
+                               </div>
+                           ))
+                       )}
+                   </div>
+                </div>
             </div>
 
             {/* Achievements Badge Wall */}
