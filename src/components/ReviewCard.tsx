@@ -264,7 +264,7 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
           </p>
 
           {/* Multi-Image Grid */}
-          {(review.image_urls?.length > 0 || review.image_url) && (
+          {((review.image_urls && review.image_urls.length > 0) || review.image_url) && (
             <div className={`mb-3 mt-2 grid gap-1 ${
               (review.image_urls?.length || 1) === 1 ? '' :
               (review.image_urls?.length || 1) === 2 ? 'grid-cols-2' :
