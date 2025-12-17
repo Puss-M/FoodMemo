@@ -47,8 +47,8 @@ export default function ChatWindow({ currentUserId, targetUser, onClose }: ChatW
           table: 'messages',
           filter: `or(and(sender_id.eq.${currentUserId},receiver_id.eq.${targetUser.id}),and(sender_id.eq.${targetUser.id},receiver_id.eq.${currentUserId}))`
         },
-        (payload) => {
-          setMessages(prev => [...prev, payload.new as Message])
+        (payload: { new: Message }) => {
+          setMessages(prev => [...prev, payload.new])
         }
       )
       .subscribe()
