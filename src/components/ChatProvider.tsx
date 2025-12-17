@@ -11,11 +11,13 @@ export default function ChatProvider({ children }: { children: React.ReactNode }
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setCurrentUserId(data.user.id)
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setCurrentUserId(user.id)
       }
-    })
+    }
+    getUser()
   }, [supabase])
 
   return (
