@@ -1,13 +1,14 @@
 'use client'
 
 import { Review } from '@/types'
-import { Clock, Trash2, Loader2, Heart, MapPin, Bookmark } from 'lucide-react'
+import { Clock, Trash2, Loader2, Heart, MapPin, Bookmark, RotateCcw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import CommentSection from './CommentSection'
+import { useComposerStore } from '@/store/useComposerStore'
 
 // Helper to format time (e.g. "2 hours ago")
 function timeAgo(dateString: string) {
@@ -162,6 +163,35 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
     }
   }
 
+  const { setDraft } = useComposerStore()
+
+  const handleWithdraw = async () => {
+    // Save to composer store first
+    setDraft({
+      content: review.content,
+      tags: review.tags?.join(' ') || '',
+      imageUrls: review.image_urls || (review.image_url ? [review.image_url] : []),
+      locationName: review.location_name || null,
+      locationCoords: review.location_coords || null
+    })
+
+    // Then delete
+    setIsDeleting(true)
+    const { error } = await supabase
+      .from('reviews')
+      .delete()
+      .eq('id', review.id)
+    
+    if (error) {
+      console.error('Error withdrawing review:', error)
+      toast.error('撤回失败')
+      setIsDeleting(false)
+    } else {
+      router.refresh()
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
   const handleDelete = async () => {
     if (!confirm('确定要删除这条评价吗？')) return
 
@@ -233,20 +263,33 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
             {review.content}
           </p>
 
-          {/* Image */}
-          {review.image_url && (
-            <div className="mb-3 mt-2">
-              <img 
-                src={review.image_url} 
-                alt="Review image" 
-                className="w-full h-48 object-cover rounded-lg border border-zinc-100 bg-zinc-50"
-                loading="lazy"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  window.open(review.image_url!, '_blank')
-                }} // Simple click to view full size
-              />
+          {/* Multi-Image Grid */}
+          {(review.image_urls?.length > 0 || review.image_url) && (
+            <div className={`mb-3 mt-2 grid gap-1 ${
+              (review.image_urls?.length || 1) === 1 ? '' :
+              (review.image_urls?.length || 1) === 2 ? 'grid-cols-2' :
+              'grid-cols-3'
+            }`}>
+              {(review.image_urls || (review.image_url ? [review.image_url] : [])).map((url: string, idx: number) => (
+                <div 
+                  key={idx} 
+                  className={`relative overflow-hidden rounded-lg ${
+                    (review.image_urls?.length || 1) === 1 ? 'aspect-video' : 'aspect-square'
+                  }`}
+                >
+                  <img 
+                    src={url} 
+                    alt={`Image ${idx + 1}`} 
+                    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity border border-zinc-100 bg-zinc-50"
+                    loading="lazy"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      window.open(url, '_blank')
+                    }}
+                  />
+                </div>
+              ))}
             </div>
           )}
 
@@ -294,14 +337,24 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
             </div>
 
             {currentUserId === review.user_id && (
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="text-zinc-300 hover:text-red-500 transition-colors p-1"
-                title="删除"
-              >
-                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleWithdraw}
+                  disabled={isDeleting}
+                  className="text-zinc-300 hover:text-blue-500 transition-colors p-1"
+                  title="撤回编辑"
+                >
+                  {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="text-zinc-300 hover:text-red-500 transition-colors p-1"
+                  title="删除"
+                >
+                  {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                </button>
+              </div>
             )}
           </div>
         </div>

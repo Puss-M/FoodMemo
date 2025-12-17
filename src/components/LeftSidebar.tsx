@@ -69,6 +69,14 @@ export default function LeftSidebar() {
           广场首页
         </Link>
         
+        <Link
+          href="/guidelines"
+          className="w-full flex items-center gap-4 px-4 py-3 rounded-full text-lg font-medium transition-colors text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+        >
+          <span className="w-7 h-7 flex items-center justify-center text-xl">📜</span>
+          用户须知
+        </Link>
+        
         {/* Commented out unimplemented features */}
         {/* 
         <button className="w-full flex items-center gap-4 px-4 py-3 rounded-full text-lg font-medium transition-colors text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900">

@@ -6,6 +6,7 @@ import { Image as ImageIcon, Send, X, Loader2, MapPin } from 'lucide-react'
 import { Session } from '@supabase/supabase-js'
 import { toast } from 'sonner'
 import LocationPicker from './LocationPicker'
+import { useComposerStore } from '@/store/useComposerStore'
 
 const PRESET_TAGS = ['👍 推荐', '💣 避雷', '🏫 食堂']
 
@@ -63,8 +64,8 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
   const supabase = createClient()
   const [content, setContent] = useState('')
   const [tags, setTags] = useState('')
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -72,17 +73,52 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
   const [showLocationPicker, setShowLocationPicker] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState<{name: string, lat: number, lng: number} | null>(null)
 
+  const MAX_IMAGES = 9
+
+  // Zustand store for withdraw-to-edit
+  const { draft, clearDraft, hasDraft } = useComposerStore()
+
+  // Consume draft when available (withdraw-to-edit)
+  useEffect(() => {
+    if (hasDraft && draft) {
+      setContent(draft.content)
+      setTags(draft.tags)
+      setImagePreviews(draft.imageUrls)
+      if (draft.locationName && draft.locationCoords) {
+        setSelectedLocation({
+          name: draft.locationName,
+          lat: draft.locationCoords.lat,
+          lng: draft.locationCoords.lng
+        })
+      }
+      setIsExpanded(true)
+      clearDraft()
+      toast.success('内容已撤回至编辑栏')
+    }
+  }, [hasDraft, draft, clearDraft])
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setImageFile(file)
-      setImagePreview(URL.createObjectURL(file))
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files)
+      const remainingSlots = MAX_IMAGES - imageFiles.length
+      const filesToAdd = newFiles.slice(0, remainingSlots)
+      
+      setImageFiles(prev => [...prev, ...filesToAdd])
+      
+      filesToAdd.forEach(file => {
+        setImagePreviews(prev => [...prev, URL.createObjectURL(file)])
+      })
     }
   }
 
-  const clearImage = () => {
-    setImageFile(null)
-    setImagePreview(null)
+  const removeImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index))
+    setImagePreviews(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const clearAllImages = () => {
+    setImageFiles([])
+    setImagePreviews([])
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -111,29 +147,27 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
 
     setLoading(true)
     try {
-      let imageUrl = null
+      let imageUrls: string[] = []
 
-      // Upload Image if exists
-      // Upload Image if exists
-      if (imageFile) {
-        // Compress image before upload
-        const compressedFile = await compressImage(imageFile)
-        
-        const fileExt = 'jpg' // Always convert to jpg
-        const fileName = `${Date.now()}.${fileExt}` // Timestamp as requested
-        const filePath = `${session.user.id}/${fileName}`
+      // Upload Images if exist
+      if (imageFiles.length > 0) {
+        for (const file of imageFiles) {
+          const compressedFile = await compressImage(file)
+          const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`
+          const filePath = `${session.user.id}/${fileName}`
 
-        const { error: uploadError } = await supabase.storage
-          .from('fm-images') // Bucket changed to fm-images
-          .upload(filePath, compressedFile)
+          const { error: uploadError } = await supabase.storage
+            .from('fm-images')
+            .upload(filePath, compressedFile)
 
-        if (uploadError) throw uploadError
+          if (uploadError) throw uploadError
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('fm-images')
-          .getPublicUrl(filePath)
-        
-        imageUrl = publicUrl
+          const { data: { publicUrl } } = supabase.storage
+            .from('fm-images')
+            .getPublicUrl(filePath)
+          
+          imageUrls.push(publicUrl)
+        }
       }
 
       // Insert Review
@@ -147,7 +181,8 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
         .insert({
           user_id: session.user.id,
           content: content,
-          image_url: imageUrl,
+          image_url: imageUrls.length > 0 ? imageUrls[0] : null, // Backward compat
+          image_urls: imageUrls.length > 0 ? imageUrls : null,   // New multi-image
           tags: tagArray.length > 0 ? tagArray : null,
           location_name: selectedLocation?.name,
           location_coords: selectedLocation ? { lat: selectedLocation.lat, lng: selectedLocation.lng } : null
@@ -157,7 +192,7 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
 
       setContent('')
       setTags('')
-      clearImage()
+      clearAllImages()
       setSelectedLocation(null)
       toast.success('发布成功！')
       await onPostSuccess()
@@ -209,16 +244,38 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
             </button>
           </div>
           
-          {imagePreview && (
-            <div className="relative inline-block mt-2 mb-4">
-              <img src={imagePreview} alt="Preview" className="h-32 w-auto rounded-lg object-cover border border-zinc-100" />
-              <button
-                type="button"
-                onClick={clearImage}
-                className="absolute -top-2 -right-2 bg-zinc-800 text-white p-1 rounded-full shadow-md hover:bg-zinc-900 transition-colors"
-              >
-                <X className="w-3 h-3" />
-              </button>
+          {/* Multi-Image Preview Grid */}
+          {imagePreviews.length > 0 && (
+            <div className={`mt-2 mb-4 grid gap-2 ${
+              imagePreviews.length === 1 ? 'grid-cols-1' :
+              imagePreviews.length === 2 ? 'grid-cols-2' :
+              'grid-cols-3'
+            }`}>
+              {imagePreviews.map((preview, index) => (
+                <div key={index} className="relative aspect-square">
+                  <img 
+                    src={preview} 
+                    alt={`Preview ${index + 1}`} 
+                    className="w-full h-full rounded-lg object-cover border border-zinc-100" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute -top-2 -right-2 bg-zinc-800 text-white p-1 rounded-full shadow-md hover:bg-zinc-900 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              {imageFiles.length < MAX_IMAGES && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="aspect-square border-2 border-dashed border-zinc-200 rounded-lg flex items-center justify-center text-zinc-400 hover:border-orange-300 hover:text-orange-500 transition-colors"
+                >
+                  <span className="text-2xl">+</span>
+                </button>
+              )}
             </div>
           )}
 
@@ -279,6 +336,7 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
                   ref={fileInputRef}
                   type="file" 
                   accept="image/*" 
+                  multiple
                   className="hidden" 
                   onChange={handleImageSelect}
                 />

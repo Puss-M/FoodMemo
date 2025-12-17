@@ -9,6 +9,7 @@ export interface Review {
   user_id: string
   content: string
   image_url: string | null
+  image_urls: string[] | null  // v9.0: Multi-image support
   tags: string[] | null
   location_name: string | null
   location_coords: any | null // JSON

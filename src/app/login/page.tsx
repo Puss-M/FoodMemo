@@ -191,6 +191,15 @@ function LoginForm() {
             {isRegister ? '已有账号？去登录' : '没有账号？使用邀请码注册'}
           </button>
         </div>
+
+        <div className="mt-4 text-center">
+          <a 
+            href="/guidelines" 
+            className="text-xs text-orange-500 hover:text-orange-600 transition-colors"
+          >
+            📜 查看用户须知 & 社区公约
+          </a>
+        </div>
       </div>
     </div>
   )
