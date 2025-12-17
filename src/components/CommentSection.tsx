@@ -33,13 +33,15 @@ export default function CommentSection({ reviewId, currentUserId }: { reviewId: 
 
   // Fetch comment count on mount
   useEffect(() => {
-    supabase
-      .from('comments')
-      .select('*', { count: 'exact', head: true })
-      .eq('review_id', reviewId)
-      .then(({ count }) => {
-        if (count !== null) setCommentCount(count)
-      })
+    const fetchCount = async () => {
+      const { count } = await supabase
+        .from('comments')
+        .select('*', { count: 'exact', head: true })
+        .eq('review_id', reviewId)
+      
+      if (count !== null) setCommentCount(count)
+    }
+    fetchCount()
   }, [reviewId, supabase])
 
   useEffect(() => {
