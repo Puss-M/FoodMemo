@@ -25,9 +25,11 @@ export default function PublicProfileView({ profile, stats, profileId }: any) {
 
     // Get current user
     useEffect(() => {
-        supabase.auth.getUser().then(({ data }) => {
-            if (data.user) setCurrentUserId(data.user.id)
-        })
+        const getUser = async () => {
+             const { data } = await supabase.auth.getUser()
+             if (data.user) setCurrentUserId(data.user.id)
+        }
+        getUser()
     }, [supabase])
 
     // Format date
