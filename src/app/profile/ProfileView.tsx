@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Calendar, LayoutGrid, Heart, Bookmark, Settings } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import ReviewCard from '@/components/ReviewCard'
+import FollowsModal from '@/components/FollowsModal'
 import Link from 'next/link'
 
 export default function ProfileView({ profile, stats, userId, inviteCodes }: any) {
@@ -12,6 +13,10 @@ export default function ProfileView({ profile, stats, userId, inviteCodes }: any
     const [reviews, setReviews] = useState<any[]>([])
     const [loading, setLoading] = useState(false)
     const [achievements, setAchievements] = useState<any[]>([])
+    const [followsModal, setFollowsModal] = useState<{ isOpen: boolean; type: 'followers' | 'following' }>({
+        isOpen: false,
+        type: 'followers'
+    })
 
     // Format date
     const joinedDate = profile?.created_at 
@@ -116,14 +121,20 @@ export default function ProfileView({ profile, stats, userId, inviteCodes }: any
                         <div className="text-xl font-bold text-zinc-900">{stats?.total_bookmarks_made || 0}</div>
                         <div className="text-xs text-zinc-400 uppercase tracking-wider font-medium mt-1">收藏</div>
                     </div>
-                    <div className="text-center">
+                    <button 
+                        onClick={() => setFollowsModal({ isOpen: true, type: 'followers' })}
+                        className="text-center hover:bg-zinc-50 rounded-lg p-2 -m-2 transition-colors cursor-pointer"
+                    >
                         <div className="text-xl font-bold text-zinc-900">{stats?.followers_count || 0}</div>
                         <div className="text-xs text-zinc-400 uppercase tracking-wider font-medium mt-1">粉丝</div>
-                    </div>
-                    <div className="text-center">
+                    </button>
+                    <button 
+                        onClick={() => setFollowsModal({ isOpen: true, type: 'following' })}
+                        className="text-center hover:bg-zinc-50 rounded-lg p-2 -m-2 transition-colors cursor-pointer"
+                    >
                         <div className="text-xl font-bold text-zinc-900">{stats?.following_count || 0}</div>
                         <div className="text-xs text-zinc-400 uppercase tracking-wider font-medium mt-1">关注</div>
-                    </div>
+                    </button>
                 </div>
 
                 {/* Invitation Center */}
@@ -291,6 +302,15 @@ export default function ProfileView({ profile, stats, userId, inviteCodes }: any
                     </div>
                 )}
             </div>
+
+            {/* Follows Modal */}
+            <FollowsModal
+                userId={userId}
+                type={followsModal.type}
+                isOpen={followsModal.isOpen}
+                onClose={() => setFollowsModal({ ...followsModal, isOpen: false })}
+                currentUserId={userId}
+            />
         </div>
     )
 }

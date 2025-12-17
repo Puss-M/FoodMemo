@@ -184,3 +184,72 @@ export async function generateInviteCode() {
     return { error: '生成失败，请重试' }
   }
 }
+
+// Follow a user
+export async function followUser(targetUserId: string) {
+  const { createClient: createServerClient } = await import('@/lib/supabase/server')
+  const supabase = await createServerClient()
+  
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  
+  if (userError || !user) {
+    return { error: '请先登录' }
+  }
+
+  if (user.id === targetUserId) {
+    return { error: '不能关注自己' }
+  }
+
+  try {
+    const { error } = await supabase
+      .from('follows')
+      .insert({
+        follower_id: user.id,
+        following_id: targetUserId
+      })
+
+    if (error) {
+      if (error.code === '23505') { // Unique violation
+        return { error: '已经关注过了' }
+      }
+      throw error
+    }
+    
+    revalidatePath('/profile')
+    revalidatePath(`/user/${targetUserId}`)
+    return { success: true }
+  } catch (err: any) {
+    console.error('Follow Error:', err)
+    return { error: '关注失败' }
+  }
+}
+
+// Unfollow a user
+export async function unfollowUser(targetUserId: string) {
+  const { createClient: createServerClient } = await import('@/lib/supabase/server')
+  const supabase = await createServerClient()
+  
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  
+  if (userError || !user) {
+    return { error: '请先登录' }
+  }
+
+  try {
+    const { error } = await supabase
+      .from('follows')
+      .delete()
+      .eq('follower_id', user.id)
+      .eq('following_id', targetUserId)
+
+    if (error) throw error
+    
+    revalidatePath('/profile')
+    revalidatePath(`/user/${targetUserId}`)
+    return { success: true }
+  } catch (err: any) {
+    console.error('Unfollow Error:', err)
+    return { error: '取消关注失败' }
+  }
+}
+
