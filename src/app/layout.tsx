@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
 import AMapRegistry from '@/components/AMapRegistry';
 import ChatProvider from '@/components/ChatProvider';
+import IOSInstallPrompt from '@/components/IOSInstallPrompt';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,9 +16,23 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#fff7ed",
+}
+
 export const metadata: Metadata = {
   title: "FoodMemo - 只有真话的美食圈",
   description: "基于熟人信任链的高质量美食分享平台。",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "FoodMemo",
+  },
   openGraph: {
     title: "FoodMemo - 只有真话的美食圈",
     description: "基于熟人信任链的高质量美食分享平台。",
@@ -35,13 +50,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      {/* PWA: Apple user-select fix to feel more like app? Optional */}
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-stone-50`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-stone-50 select-none`}
       >
         <AMapRegistry />
         <ChatProvider>
           {children}
         </ChatProvider>
+        <IOSInstallPrompt />
         <Toaster position="top-center" richColors />
       </body>
     </html>
