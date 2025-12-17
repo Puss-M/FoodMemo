@@ -226,7 +226,7 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
       <div className="flex gap-4">
         {/* Avatar */}
         <div className="shrink-0">
-            <Link href={`/profile`}>
+            <Link href={`/user/${review.user_id}`}>
               <img 
                 src={review.profiles?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${review.profiles?.username || 'User'}`} 
                 alt="Avatar" 
