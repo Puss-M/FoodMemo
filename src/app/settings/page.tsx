@@ -7,6 +7,7 @@ import { ArrowLeft, Moon, Sun, LogOut, User, Palette } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import AvatarUpload from '@/components/AvatarUpload'
+import { useTheme } from 'next-themes'
 
 export default function SettingsPage() {
   const supabase = createClient()
@@ -20,7 +21,6 @@ export default function SettingsPage() {
   // Form states
   const [username, setUsername] = useState('')
   const [bio, setBio] = useState('')
-  const [isDarkMode, setIsDarkMode] = useState(false)
 
   useEffect(() => {
     async function loadProfile() {
@@ -46,9 +46,7 @@ export default function SettingsPage() {
         setBio(data.bio || '')
       }
 
-      // Load dark mode preference
-      const darkMode = localStorage.getItem('darkMode') === 'true'
-      setIsDarkMode(darkMode)
+
       
       setLoading(false)
     }
@@ -81,40 +79,49 @@ export default function SettingsPage() {
     toast.success('已退出登录')
   }
 
+  // Theme logic
+  const { setTheme, resolvedTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const isDarkMode = mounted && resolvedTheme === 'dark'
+
   const toggleDarkMode = () => {
-    const newMode = !isDarkMode
-    setIsDarkMode(newMode)
-    localStorage.setItem('darkMode', String(newMode))
-    toast.info(newMode ? '深色模式已开启' : '浅色模式已开启')
-    // Apply theme (you can add actual theme switching logic here)
+    const newTheme = isDarkMode ? 'light' : 'dark'
+    setTheme(newTheme)
+    toast.info(newTheme === 'dark' ? '深色模式已开启' : '浅色模式已开启')
   }
 
-  if (loading) {
+  if (loading || !mounted) {
     return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center">
         <div className="text-zinc-400">加载中...</div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
       {/* Header */}
-      <div className="bg-white border-b border-zinc-100 sticky top-0 z-10">
+      <div className="bg-white dark:bg-zinc-900 border-b border-zinc-100 dark:border-zinc-800 sticky top-0 z-10">
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center gap-4">
           <Link href="/profile">
-            <ArrowLeft className="w-6 h-6 text-zinc-700 hover:text-zinc-900" />
+            <ArrowLeft className="w-6 h-6 text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white" />
           </Link>
-          <h1 className="text-xl font-bold text-zinc-900">设置</h1>
+          <h1 className="text-xl font-bold text-zinc-900 dark:text-white">设置</h1>
         </div>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         {/* Profile Section */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-zinc-100">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center gap-2 mb-6">
-            <User className="w-5 h-5 text-zinc-600" />
-            <h2 className="text-lg font-bold text-zinc-900">个人资料</h2>
+            <User className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <h2 className="text-lg font-bold text-zinc-900 dark:text-white">个人资料</h2>
           </div>
 
           <div className="space-y-6">
@@ -127,28 +134,28 @@ export default function SettingsPage() {
 
             {/* Username */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 昵称
               </label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-zinc-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
                 placeholder="请输入昵称"
               />
             </div>
 
             {/* Bio */}
             <div>
-              <label className="block text-sm font-medium text-zinc-700 mb-2">
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                 个性签名
               </label>
               <textarea
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 rows={3}
-                className="w-full px-4 py-2.5 bg-zinc-50 border border-zinc-200 rounded-lg text-zinc-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 resize-none"
+                className="w-full px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 resize-none"
                 placeholder="一句话介绍自己..."
                 maxLength={100}
               />
@@ -166,24 +173,24 @@ export default function SettingsPage() {
         </div>
 
         {/* Appearance Section */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-zinc-100">
+        <div className="bg-white dark:bg-zinc-900 rounded-2xl p-6 shadow-sm border border-zinc-100 dark:border-zinc-800">
           <div className="flex items-center gap-2 mb-4">
-            <Palette className="w-5 h-5 text-zinc-600" />
-            <h2 className="text-lg font-bold text-zinc-900">外观</h2>
+            <Palette className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
+            <h2 className="text-lg font-bold text-zinc-900 dark:text-white">外观</h2>
           </div>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {isDarkMode ? <Moon className="w-5 h-5 text-zinc-600" /> : <Sun className="w-5 h-5 text-zinc-600" />}
+              {isDarkMode ? <Moon className="w-5 h-5 text-zinc-600 dark:text-zinc-400" /> : <Sun className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />}
               <div>
-                <div className="font-medium text-zinc-900">深色模式</div>
+                <div className="font-medium text-zinc-900 dark:text-white">深色模式</div>
                 <div className="text-xs text-zinc-400">切换应用主题</div>
               </div>
             </div>
             <button
               onClick={toggleDarkMode}
               className={`relative w-12 h-6 rounded-full transition-colors ${
-                isDarkMode ? 'bg-orange-500' : 'bg-zinc-300'
+                isDarkMode ? 'bg-orange-500' : 'bg-zinc-300 dark:bg-zinc-700'
               }`}
             >
               <div

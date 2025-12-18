@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import AMapRegistry from '@/components/AMapRegistry';
 import ChatProvider from '@/components/ChatProvider';
 import IOSInstallPrompt from '@/components/IOSInstallPrompt';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,14 +53,21 @@ export default function RootLayout({
     <html lang="en">
       {/* PWA: Apple user-select fix to feel more like app? Optional */}
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-stone-50 select-none`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground select-none`}
       >
-        <AMapRegistry />
-        <ChatProvider>
-          {children}
-        </ChatProvider>
-        <IOSInstallPrompt />
-        <Toaster position="top-center" richColors />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AMapRegistry />
+          <ChatProvider>
+            {children}
+          </ChatProvider>
+          <IOSInstallPrompt />
+          <Toaster position="top-center" richColors />
+        </ThemeProvider>
       </body>
     </html>
   );

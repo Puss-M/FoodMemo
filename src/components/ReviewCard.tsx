@@ -39,6 +39,7 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
   const [isLiked, setIsLiked] = useState(false) 
   const [likeCount, setLikeCount] = useState(0)
   const [isBookmarked, setIsBookmarked] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   
   // Use global follow store
   const { isFollowingUser, setFollowStatus } = useFollowStore()
@@ -266,9 +267,19 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
           </div>
 
           {/* Content */}
-          <p className="text-zinc-900 whitespace-pre-wrap leading-relaxed mb-3 text-[15px]">
-            {review.content}
-          </p>
+          <div className="text-zinc-900 whitespace-pre-wrap leading-relaxed mb-3 text-[15px]">
+            <p className={`${!isExpanded && review.content.length > 200 ? 'line-clamp-4' : ''}`}>
+              {review.content}
+            </p>
+            {review.content.length > 200 && (
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="text-orange-500 text-sm font-medium mt-1 hover:text-orange-600 transition-colors"
+              >
+                {isExpanded ? '收起' : '展开'}
+              </button>
+            )}
+          </div>
 
           {/* Multi-Image Grid */}
           {((review.image_urls && review.image_urls.length > 0) || review.image_url) && (

@@ -13,10 +13,15 @@ export default function MobileNavbar() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-100 h-16 md:hidden z-50 px-6 flex items-center justify-between shadow-[0_-1px_3px_rgba(0,0,0,0.02)]">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-100 h-16 md:hidden z-50 px-4 flex items-center justify-around shadow-[0_-1px_3px_rgba(0,0,0,0.02)]">
       <Link href="/" className={`flex flex-col items-center gap-1 ${pathname === '/' ? 'text-orange-500' : 'text-zinc-400'}`}>
         <Home className="w-6 h-6" />
         <span className="text-[10px] font-medium">首页</span>
+      </Link>
+
+      <Link href="/guidelines" className={`flex flex-col items-center gap-1 ${pathname === '/guidelines' ? 'text-orange-500' : 'text-zinc-400'}`}>
+        <span className="text-2xl">📜</span>
+        <span className="text-[10px] font-medium">须知</span>
       </Link>
 
       <button 

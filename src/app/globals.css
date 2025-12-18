@@ -7,6 +7,13 @@
   --foreground: #18181b;
 }
 
+.dark {
+  /* Zinc-900 */
+  --background: #18181b;
+  /* Zinc-50 */
+  --foreground: #fafafa;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

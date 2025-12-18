@@ -9,6 +9,7 @@ import MobileNavbar from '@/components/MobileNavbar'
 import SearchBar from '@/components/SearchBar'
 import { revalidatePath } from 'next/cache'
 import { UtensilsCrossed } from 'lucide-react'
+import ClusterView from '@/components/ClusterView'
 
 export const dynamic = 'force-dynamic'
 
@@ -81,6 +82,9 @@ export default async function Home(props: Props) {
             {(searchParams.tag || searchParams.cuisine || searchParams.q) && (
                 <a href="/" className="text-sm text-zinc-400 hover:text-orange-500 ml-2">清除筛选</a>
             )}
+            <div className="ml-auto">
+              <ClusterView reviews={reviews || []} />
+            </div>
           </div>
 
           {/* Search Bar */}

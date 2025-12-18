@@ -253,3 +253,26 @@ export async function unfollowUser(targetUserId: string) {
   }
 }
 
+
+// AI Clustering
+import { clusterContent } from '@/lib/ai'
+
+export async function clusterReviewsAction(reviews: { id: string, content: string }[]) {
+  const apiKey = process.env.AI_API_KEY
+  const baseUrl = process.env.AI_BASE_URL || "https://api.siliconflow.cn/v1"
+
+  if (!apiKey) {
+    return { error: 'AI 服务未配置 (Missing API Key)' }
+  }
+
+  // Limit to 20 reviews to save tokens and time
+  const limitedReviews = reviews.slice(0, 20)
+
+  try {
+    const result = await clusterContent(limitedReviews, apiKey, baseUrl)
+    return { success: true, data: result }
+  } catch (err: any) {
+    console.error('Clustering Error:', err)
+    return { error: 'AI 聚类失败: ' + err.message }
+  }
+}
