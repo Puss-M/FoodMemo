@@ -4,7 +4,7 @@ import { Search } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 
-const CUISINES = ['川菜', '火锅', '烧烤', '小吃', '饮品', '食堂', '西餐']
+const CUISINES = ['调酒', '川菜', '火锅', '烧烤', '小吃', '饮品', '食堂', '西餐']
 
 export default function SearchBar() {
   const router = useRouter()
