@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import CommentSection from './CommentSection'
+import ImageLightbox from './ImageLightbox'
 import { useComposerStore } from '@/store/useComposerStore'
 import { useFollowStore } from '@/store/useFollowStore'
 
@@ -40,6 +41,10 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
   const [likeCount, setLikeCount] = useState(0)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
+  
+  // Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
   
   // Use global follow store
   const { isFollowingUser, setFollowStatus } = useFollowStore()
@@ -303,12 +308,22 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
                     onClick={(e) => {
                       e.preventDefault()
                       e.stopPropagation()
-                      window.open(url, '_blank')
+                      setLightboxIndex(idx)
+                      setLightboxOpen(true)
                     }}
                   />
                 </div>
               ))}
             </div>
+          )}
+
+          {/* Image Lightbox */}
+          {lightboxOpen && (
+            <ImageLightbox
+              images={review.image_urls || (review.image_url ? [review.image_url] : [])}
+              initialIndex={lightboxIndex}
+              onClose={() => setLightboxOpen(false)}
+            />
           )}
 
           {/* Footer / Tags - Color coded by type */}
@@ -317,7 +332,7 @@ export default function ReviewCard({ review, currentUserId }: { review: Review, 
               {review.tags.map((tag, idx) => {
                 // Determine tag color based on type
                 const isScenario = ['👤 一人食', '👩‍❤️‍👨 约会', '👯 朋友聚餐', '🍻 部门团建', '💼 商务'].includes(tag)
-                const isCuisine = ['川菜', '火锅', '粤菜', '湘菜', '烧烤', '日韩', '西餐', '甜点', '面食', '小吃'].includes(tag)
+                const isCuisine = ['调酒', '川菜', '火锅', '粤菜', '湘菜', '东北菜', '江浙菜', '新疆菜', '烧烤', '日韩', '西餐', '东南亚', '甜点', '面食', '小吃', '素食', '咖啡', '奶茶', '轻食'].includes(tag)
                 
                 return (
                   <Link 

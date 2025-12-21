@@ -11,7 +11,7 @@ import { useComposerStore } from '@/store/useComposerStore'
 const PRESET_TAGS = ['👍 推荐', '💣 避雷', '🏫 食堂']
 
 // v9.1: Structured tag options
-const CUISINE_OPTIONS = ['川菜', '火锅', '粤菜', '湘菜', '烧烤', '日韩', '西餐', '甘点', '面食', '小吃']
+const CUISINE_OPTIONS = ['调酒', '川菜', '火锅', '粤菜', '湘菜', '东北菜', '江浙菜', '新疆菜', '烧烤', '日韩', '西餐', '东南亚', '甜点', '面食', '小吃', '素食', '咖啡', '奶茶', '轻食']
 const SCENARIO_OPTIONS = ['👤 一人食', '👩‍❤️‍👨 约会', '👯 朋友聚餐', '🍻 部门团建', '💼 商务']
 
 // Helper to compress image
@@ -24,8 +24,8 @@ const compressImage = async (file: File): Promise<File> => {
       img.src = event.target?.result as string
       img.onload = () => {
         const canvas = document.createElement('canvas')
-        const maxWidth = 1920
-        const maxHeight = 1080
+        const maxWidth = 1280
+        const maxHeight = 720
         let width = img.width
         let height = img.height
 
@@ -56,7 +56,7 @@ const compressImage = async (file: File): Promise<File> => {
             } else {
                 reject(new Error('Canvas is empty'))
             }
-        }, 'image/jpeg', 0.8) // Quality 0.8
+        }, 'image/jpeg', 0.6) // Quality 0.6 for better compression
       }
       img.onerror = (error) => reject(error)
     }
