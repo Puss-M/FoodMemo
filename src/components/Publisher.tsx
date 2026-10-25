@@ -155,7 +155,7 @@ export default function Publisher({ session, onPostSuccess }: { session: Session
 
     setLoading(true)
     try {
-      let imageUrls: string[] = []
+      const imageUrls: string[] = []
 
       // Upload Images if exist
       if (imageFiles.length > 0) {
